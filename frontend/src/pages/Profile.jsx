@@ -1,57 +1,137 @@
-import { useContext, useEffect, useState } from 'react';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import { useContext, useEffect, useState } from 'react'
+import axios from 'axios'
+import { AuthContext } from '../context/AuthContext'
 
 const Profile = () => {
-  const { user } = useContext(AuthContext);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { user, token } = useContext(AuthContext)
+  const [profile, setProfile] = useState({
+    username: user?.username || '',
+    email: user?.email || '',
+    password: '',
+    newPassword: '',
+  })
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('authToken');
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        };
-        const response = await axios.get('/api/profile', config);
-        setProfile(response.data);
+        }
+        const response = await axios.get('/api/profile', config)
+        setProfile({
+          username: response.data.username,
+          email: response.data.email,
+          password: '',
+          newPassword: '',
+        })
       } catch (err) {
-        console.error('Error fetching profile data:', err); // Log the error
-        setError('Error fetching profile data');
+        console.error('Error fetching profile data:', err) // Log the error
+        setError('Error fetching profile data')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchProfile();
-  }, []);
+    fetchProfile()
+  }, [token])
 
-  if (loading) {
-    return <p>Loading...</p>;
+  const handleChange = (e) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value })
   }
 
-  if (error) {
-    return <p>{error}</p>;
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setMessage('')
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+      const { data } = await axios.put('/api/profile', profile, config)
+      setMessage('Profile updated successfully')
+    } catch (err) {
+      console.error('Error updating profile:', err) // Log the error
+      setError('Error updating profile')
+    }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-base-200">
       <div className="w-full max-w-md p-8 space-y-3 rounded-xl bg-base-100 shadow-lg">
         <h1 className="text-3xl font-bold text-center">Profile</h1>
-        <div className="text-center">
-          <img src={profile.avatar || 'https://via.placeholder.com/150'} alt="avatar" className="w-24 h-24 rounded-full mx-auto" />
-          <h2 className="text-xl font-bold mt-4">{profile.username}</h2>
-          <p className="text-gray-600">{profile.email}</p>
-          <p className="mt-4">{profile.bio || 'No bio available'}</p>
-          <p className="mt-4">Logged in as: {user.username}</p> {/* Example usage of user */}
-        </div>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="form-control">
+            <label className="label">
+              <span className="font-bold label-text">Username</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              className="input input-bordered w-full"
+              value={profile.username}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="font-bold label-text">Email</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="abc@xyz.com"
+              className="input input-bordered w-full"
+              value={profile.email}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="font-bold label-text">Current Password</span>
+            </label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Current Password"
+              className="input input-bordered w-full"
+              value={profile.password}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="font-bold label-text">New Password</span>
+            </label>
+            <input
+              type="password"
+              name="newPassword"
+              placeholder="New Password"
+              className="input input-bordered w-full"
+              value={profile.newPassword}
+              onChange={handleChange}
+            />
+          </div>
+          {error && <p className="text-red-500 text-center">{error}</p>}
+          {message && <p className="text-green-500 text-center">{message}</p>}
+          <div className="form-control mt-6">
+            <button className="btn btn-primary w-full">Update Profile</button>
+          </div>
+        </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Profile;
+export default Profile

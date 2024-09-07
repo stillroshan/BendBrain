@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState } from 'react'
+import axios from 'axios'
 
 const Signup = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(''); // Clear previous errors
+    e.preventDefault()
+    setError('') // Clear previous errors
     try {
-      const response = await axios.post('/api/signup', { username, email, password });
-      const { token } = response.data;
-      localStorage.setItem('authToken', token);
+      const response = await axios.post('/api/signup', { username, email, password })
+      const { token } = response.data
+      localStorage.setItem('authToken', token)
       // Redirect to dashboard or home page
-      window.location.href = '/';
+      window.location.href = '/'
     } catch (err) {
-      setError(err.response.data.message || 'Error signing up');
+      setError(err.response.data.message || 'Error signing up')
     }
-  };
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-base-200">
@@ -32,7 +32,7 @@ const Signup = () => {
             </label>
             <input
               type="text"
-              placeholder="Username"
+              placeholder="abc"
               className="input input-bordered w-full"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -44,7 +44,7 @@ const Signup = () => {
             </label>
             <input
               type="email"
-              placeholder="abc@xyz.com"
+              placeholder="abc@gmail.com"
               className="input input-bordered w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -56,7 +56,7 @@ const Signup = () => {
             </label>
             <input
               type="password"
-              placeholder="########"
+              placeholder="password"
               className="input input-bordered w-full"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -66,11 +66,14 @@ const Signup = () => {
           <div className="form-control mt-6">
             <button className="btn btn-primary w-full">Signup</button>
           </div>
+          <div className="form-control mt-6">
+            <a href="/api/auth/google" className="btn btn-secondary w-full">Signup with Google</a>
+          </div>
         </form>
         <p className="text-center">Already have an account? <a href="/login" className="text-primary">Login</a></p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Signup;
+export default Signup

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -14,9 +15,23 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true
     },
+    googleId: {
+        type: String,
+        default: null
+    },
     password: {
         type: String,
-        required: true
+        required: function() {
+            return !this.googleId // Password is required if user is not signing up with Google
+        }
+    },
+    resetPasswordToken: {
+        type: String,
+        default: null
+    },
+    resetPasswordExpire: {
+        type: Date,
+        default: null
     },
     isAdmin: {
         type: Boolean,
@@ -43,6 +58,13 @@ userSchema.pre('save', async function(next) {
 // Method to compare password
 userSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password)
+}
+
+// Method to generate JWT token
+userSchema.methods.generateAuthToken = function() {
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { 
+        expiresIn: '30d' 
+    })
 }
 
 const User = mongoose.model('User', userSchema)

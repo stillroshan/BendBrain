@@ -8,7 +8,11 @@ import Discuss from './pages/Discuss'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
 import Navbar from './components/Navbar'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+
 
 function App() {
     return (
@@ -24,6 +28,9 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+                <Route path="/forgotpassword" element={<ForgotPassword />} />
+                <Route path="/resetpassword/:token" element={<ResetPassword />} />
             </Routes>
         </>
     ) 

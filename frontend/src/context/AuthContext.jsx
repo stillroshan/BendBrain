@@ -6,10 +6,10 @@ export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
+    const [token, setToken] = useState(localStorage.getItem('authToken'))
 
     useEffect(() => {
         const fetchUser = async () => {
-            const token = localStorage.getItem('authToken')
             if (token) {
                 try {
                     const response = await axios.get('/api/profile', {
@@ -24,16 +24,17 @@ export const AuthProvider = ({ children }) => {
             }
         }
         fetchUser()
-    }, [])
+    }, [token])
 
     const logout = () => {
         localStorage.removeItem('authToken')
         setUser(null)
+        setToken(null)
         window.location.href = '/login'
     }
 
     return (
-        <AuthContext.Provider value={{ user, logout }}>
+        <AuthContext.Provider value={{ user, token, setToken, logout }}>
             {children}
         </AuthContext.Provider>
     )

@@ -1,5 +1,5 @@
-import { Link, NavLink } from 'react-router-dom';
-import ThemeSelector from '../utils/ThemeSelector';
+import { Link, NavLink } from 'react-router-dom'
+import ThemeSelector from '../utils/ThemeSelector'
 import { useContext } from 'react'
 import { AuthContext } from '../context/AuthContext.jsx'
 
@@ -96,7 +96,7 @@ const Navbar = () => {
                 </div>
             </div>
         </nav>
-    );
+    )
 }
 
 export default Navbar

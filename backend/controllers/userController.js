@@ -1,5 +1,6 @@
-import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
+import crypto from 'crypto'
+import sendEmail from '../utils/sendEmail.js'
 
 // @desc    Register a new user
 // @route   POST /api/signup
@@ -28,7 +29,7 @@ const registerUser = async (req, res) => {
             _id: user._id,
             username: user.username,
             email: user.email,
-            token: generateToken(user._id)
+            token: user.generateAuthToken()
         })
     } else {
         return res.status(400).json({ message: 'Invalid user data'})
@@ -52,7 +53,7 @@ const authUser = async (req, res) => {
                 username: user.username,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                token: generateToken(user._id)
+                token: user.generateAuthToken()
             })
         } else {
             return res.status(401).json({ message: 'Invalid email or passowrd' })
@@ -80,11 +81,90 @@ const getUserProfile = async (req, res) => {
     }
 }
 
-// Generate JWT token
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d'
-    })
+// @desc    Forgot password
+// @route   POST /api/forgotpassword
+// @access  Public
+const forgotPassword = async (req, res) => {
+    const { email } = req.body
+    const user = await User.findOne({ email })
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' })
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex')
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex')
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000 // 10 minutes
+    await user.save()
+
+    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`
+    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`
+
+    try {
+        await sendEmail({
+            to: user.email,
+            subject: 'Password Reset Token',
+            text: message
+        })
+
+        res.status(200).json({ message: 'Email sent' })
+    } catch (error) {
+        console.error('Error sending email:', error)
+        user.resetPasswordToken = undefined
+        user.resetPasswordExpire = undefined
+        await user.save()
+        res.status(500).json({ message: 'Email could not be sent' })
+    }
 }
 
-export { registerUser, authUser, getUserProfile }
+// @desc    Reset password
+// @route   PUT /api/resetpassword/:token
+// @access  Public
+const resetPassword = async (req, res) => {
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }
+    })
+
+    if (!user) {
+        return res.status(400).json({ message: 'Invalid token' })
+    }
+
+    user.password = req.body.password
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpire = undefined
+    await user.save()
+
+    res.status(200).json({ message: 'Password updated successfully'})
+}
+
+// @desc    Update user profile
+// @route   PUT /api/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id)
+
+    if (user) {
+        user.username = req.body.username || user.username
+        user.email = req.body.email || user.email
+        
+        if (req.body.password) {
+            user.password = req.body.password
+        }
+
+        const updatedUser = await user.save()
+
+        res.json({
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin,
+            token: updatedUser.generateAuthToken()
+        })
+    } else {
+        res.status(404).json({ message: 'User not found' })
+    }
+}
+
+export { registerUser, authUser, getUserProfile, forgotPassword, resetPassword, updateUserProfile }
