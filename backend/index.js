@@ -40,6 +40,9 @@ app.get('/api/auth/google/callback', passport.authenticate('google', { failureRe
 import userRoutes from './routes/userRoutes.js'
 app.use('/api', userRoutes)
 
+import questionRoutes from './routes/questionRoutes.js'
+app.use('/api/questions', questionRoutes)
+
 // Listen
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
