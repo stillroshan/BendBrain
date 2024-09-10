@@ -39,8 +39,8 @@ const Home = () => {
               <a href="/practice">
                 <button className="btn btn-primary" onClick={() => navigate('/practice')}>Go to Practice</button>
               </a>
-              <a href="/contest">
-                <button className="btn btn-secondary" onClick={() => navigate('/contest')}>Join a Contest</button>
+              <a href="/compete">
+                <button className="btn btn-secondary" onClick={() => navigate('/compete')}>Join a Contest</button>
               </a>
             </div>
           </div>

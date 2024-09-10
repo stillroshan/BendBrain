@@ -51,13 +51,6 @@ const Navbar = () => {
                         className={({ isActive }) => 
                             isActive ? "btn btn-ghost text-l active" : "btn btn-ghost text-l"
                         } 
-                        to="/contest">
-                        Contest
-                    </NavLink>
-                    <NavLink 
-                        className={({ isActive }) => 
-                            isActive ? "btn btn-ghost text-l active" : "btn btn-ghost text-l"
-                        } 
                         to="/discuss">
                         Discuss
                     </NavLink>
