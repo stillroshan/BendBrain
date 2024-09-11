@@ -1,4 +1,5 @@
 import Question from '../models/Question.js'
+import SolvedQuestion from '../models/SolvedQuestion.js'
 
 // @desc    Create a new question
 // @route   POST /api/questions
@@ -75,8 +76,7 @@ const updateQuestion = async (req, res) => {
             question.explanation = explanation || question.explanation
             question.section = section || question.section
             question.difficulty = difficulty || question.difficulty
-            question.status = status || question.status
-            question.questionId = questionId || question.questionId
+            question.questionId = question.questionId
 
             const updatedQuestion = await question.save()
             res.json(updatedQuestion)
@@ -106,4 +106,49 @@ const deleteQuestion = async (req, res) => {
     }
 }
 
-export { createQuestion, getQuestions, getQuestionByQuestionId, updateQuestion, deleteQuestion }
+// @desc   Record a solved question
+// @route  POST /api/questions/solved
+// @access Private
+const recordSolvedQuestion = async (req, res) => {
+    const { userId, questionId, section, type, difficulty, attempts, timeSpent } = req.body
+
+    try {
+        // Calculate accuracy and score
+        const accuracy = (1 / attempts) * 100
+        const score = accuracy / timeSpent
+
+        // Calculate percentile for this question
+        const percentile = await calculatePercentile(questionId, score)
+
+        // Create or update the solved question record
+        const solvedQuestion = new SolvedQuestion({
+            userId,
+            questionId,
+            section,
+            type,
+            difficulty,
+            attempts,
+            accuracy,
+            timeSpent,
+            score,
+            percentile
+        })
+
+        await solvedQuestion.save()
+
+        res.status(201).json({ message: 'Solved question recorded' })
+    } catch (error) {
+        res.status(400).json({ error: 'Error reading solved question'})
+    }
+}
+
+const calculatePercentile = async (questionId, score) => {
+    const allScores = await SolvedQuestion.find({ questionId }).select('scoer')
+    const scoresBelow = allScores.filter(q => q.score < userScore).length
+
+    const percentile = (scoresBelow / allScores.length) * 100
+
+    return percentile
+}
+
+export { createQuestion, getQuestions, getQuestionByQuestionId, updateQuestion, deleteQuestion, recordSolvedQuestion }

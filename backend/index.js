@@ -43,6 +43,9 @@ app.use('/api', userRoutes)
 import questionRoutes from './routes/questionRoutes.js'
 app.use('/api/questions', questionRoutes)
 
+import dashboardRoutes from './routes/dashboardRoutes.js'
+app.use('/api/dashboard', dashboardRoutes)
+
 // Listen
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {

@@ -40,11 +40,6 @@ const questionSchema = new mongoose.Schema({
         enum: ['Numerical Ability', 'Verbal Reasoning', 'Non-verbal Reasoning', 'Verbal Ability', 'Quantitative Aptitude', 'Data Interpretation'],
         required: true
     },
-    status: {
-        type: String,
-        enum: ['Solved', 'Unsolved', 'Attempted'],
-        default: 'Unsolved'
-    },
     difficulty: {
         type: String,
         enum: ['Easy', 'Medium', 'Hard'],
