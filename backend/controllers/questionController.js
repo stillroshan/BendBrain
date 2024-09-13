@@ -32,9 +32,60 @@ const createQuestion = async (req, res) => {
 // @route   GET /api/questions
 // @access  Public
 const getQuestions = async (req, res) => {
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const { section, difficulty, type, status, search, userId } = req.query
+    let query = {}
+
+    if (section) {
+        query.section = section
+    }
+
+    if (difficulty) {
+        query.difficulty = difficulty
+    }
+
+    if (type) {
+        query.type = type
+    }
+
+    if (search) {
+        query.$or = [
+            { title: { $regex: search, $options: 'i' } }
+        ]
+    }
+
     try {
-        const questions = await Question.find({})
-        res.json(questions)
+        const totalQuestions = await Question.countDocuments(query)
+        const questions = await Question.find(query).limit(limit).skip(skip)
+
+        // Fetch solved questions for the user
+        const solvedQuestions = await SolvedQuestion.find({ userId }).select('questionId status')
+
+        // Map solved questions to a dictionary for quick lookup
+        const solvedQuestionsMap = solvedQuestions.reduce((acc, sq) => {
+            acc[sq.questionId] = sq.status
+            return acc
+        }, {})
+
+        // Add status to each question
+        const questionsWithStatus = questions.map(question => ({
+            ...question.toObject(),
+            status: solvedQuestionsMap[question._id] || 'Unsolved'
+        }))
+
+        // Filter questions by status if the status filter is applied
+        const filteredQuestions = status
+            ? questionsWithStatus.filter(question => question.status === status)
+            : questionsWithStatus
+
+        res.json({
+            questions: filteredQuestions,
+            totalPages: Math.ceil(totalQuestions / limit),
+            currentPage: page
+        })
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
@@ -135,6 +186,19 @@ const recordSolvedQuestion = async (req, res) => {
         })
 
         await solvedQuestion.save()
+
+        // Update the question's average accuracy and time spent
+        const question = await Question.findById(questionId)
+        const solvedQuestions = await SolvedQuestion.find({ questionId })
+
+        const totalAccuracy = solvedQuestions.reduce((acc, q) => acc + q.accuracy, 0)
+        const totalTimeSpent = solvedQuestions.reduce((acc, q) => acc + q.timeSpent, 0)
+        const totalAttempts = solvedQuestions.length
+
+        question.avgAccuracy = totalAccuracy / totalAttempts
+        question.avgTimeSpent = totalTimeSpent / totalAttempts
+
+        await question.save()
 
         res.status(201).json({ message: 'Solved question recorded' })
     } catch (error) {

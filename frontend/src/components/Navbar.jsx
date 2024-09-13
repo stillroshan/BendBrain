@@ -54,6 +54,15 @@ const Navbar = () => {
                         to="/discuss">
                         Discuss
                     </NavLink>
+                    { user && user.isAdmin &&
+                        <NavLink 
+                            className={({ isActive }) => 
+                                isActive ? "btn btn-ghost text-l active" : "btn btn-ghost text-l"
+                            } 
+                            to="/admin">
+                            Admin
+                        </NavLink>
+                    }
                 </div>
                 <div className="flex-none gap-2">
                     {user ? (

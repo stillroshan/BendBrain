@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
-import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
 import axios from 'axios'
 
-const Practice = ({ userId }) => {
+const Admin = () => {
     const [questions, setQuestions] = useState([])
     const [filters, setFilters] = useState({
         section: '',
         difficulty: '',
-        status: '',
         type: '',
         search: ''
     })
@@ -18,17 +17,15 @@ const Practice = ({ userId }) => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const { section, difficulty, type, status, search } = filters
+                const { section, difficulty, type, search } = filters
                 const response = await axios.get('/api/questions', {
                     params: {
                         section,
                         difficulty,
                         type,
-                        status,
                         search,
                         page: currentPage,
-                        limit: 50,
-                        userId
+                        limit: 50
                     }
                 })
                 setQuestions(response.data.questions || [])
@@ -40,7 +37,7 @@ const Practice = ({ userId }) => {
         }
 
         fetchQuestions()
-    }, [filters, currentPage, userId])
+    }, [filters, currentPage])
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target
@@ -60,40 +57,7 @@ const Practice = ({ userId }) => {
 
             {/* Main Section */}
             <main className="w-full md:w-2/3 p-4">
-                <h1 className="text-3xl font-bold mb-4">Practice</h1>
-
-                {/* Card Buttons */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Numerical Ability</h2>
-                        <p className="mt-2">Practice questions on Numerical Ability</p>
-                    </div>
-
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Verbal Reasoning</h2>
-                        <p className="mt-2">Practice questions on Verbal Reasoning</p>
-                    </div>
-
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Non-verbal Reasoning</h2>
-                        <p className="mt-2">Practice questions on Non-verbal Ability</p>
-                    </div>
-
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Verbal Ability</h2>
-                        <p className="mt-2">Practice questions on Verbal Ability</p>
-                    </div>
-
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Quantitative Aptitude</h2>
-                        <p className="mt-2">Practice questions on Quantitative Aptitude</p>
-                    </div>
-
-                    <div className="card shadow-lg bg-base-100 p-4">
-                        <h2 className="text-xl font-bold">Data Interpretation</h2>
-                        <p className="mt-2">Practice questions on Data Interpretation</p>
-                    </div>
-                </div>
+                <h1 className="text-3xl font-bold mb-4">Admin Panel</h1>
 
                 {/* Filter Buttons */}
                 <div className="flex items-center mb-4 space-x-4">
@@ -116,14 +80,6 @@ const Practice = ({ userId }) => {
                         <option value="Hard">Hard</option>
                     </select>
                     
-                    {/* Status Dropdown */}
-                    <select name="status" className="select select-bordered" onChange={handleFilterChange}>
-                        <option value="">Status</option>
-                        <option value="Solved">Solved</option>
-                        <option value="Unsolved">Unsolved</option>
-                        <option value="Attempted">Attempted</option>
-                    </select>
-                    
                     {/* Type Dropdown */}
                     <select name="type" className="select select-bordered" onChange={handleFilterChange}>
                         <option value="">Type</option>
@@ -139,9 +95,11 @@ const Practice = ({ userId }) => {
                         className="input input-bordered flex-grow"
                         onChange={handleFilterChange} 
                     />
-                    
-                    {/* Random Button */}
-                    <button className="btn btn-primary">Pick One</button>
+
+                    {/* Create Question Button */}
+                    <Link to="/admin/question/new" className="btn btn-primary">
+                        Create Question
+                    </Link>
                 </div>
 
                 {/* Questions Table */}
@@ -151,11 +109,9 @@ const Practice = ({ userId }) => {
                             <tr>
                                 <th>Number</th>
                                 <th>Title</th>
+                                <th>Section</th>
                                 <th>Difficulty</th>
                                 <th>Type</th>
-                                <th>Status</th>
-                                <th>Accuracy</th>
-                                <th>Time Spent</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -163,15 +119,13 @@ const Practice = ({ userId }) => {
                                 <tr 
                                     key={question._id} 
                                     className="hover cursor-pointer" 
-                                    onClick={() => window.location.href = `/question/${question._id}`}
+                                    onClick={() => window.location.href = `/admin/question/${question.questionId}`}
                                 >
                                     <td>{question.questionId}</td>
                                     <td>{question.title}</td>
+                                    <td>{question.section}</td>
                                     <td>{question.difficulty}</td>
                                     <td>{question.type}</td>
-                                    <td>{question.status}</td>
-                                    <td>{question.avgAccuracy.toFixed(2)} %</td>
-                                    <td>{question.avgTimeSpent.toFixed(2)} s</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -215,8 +169,4 @@ const Practice = ({ userId }) => {
     )
 }
 
-Practice.propTypes = {
-    userId: PropTypes.string,
-}
-
-export default Practice
+export default Admin

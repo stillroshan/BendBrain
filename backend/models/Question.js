@@ -44,7 +44,15 @@ const questionSchema = new mongoose.Schema({
         type: String,
         enum: ['Easy', 'Medium', 'Hard'],
         required: true
-    }
+    },
+    avgAccuracy: {
+        type: Number,
+        default: 0
+    },
+    avgTimeSpent: {
+        type: Number,
+        default: 0
+    },
 }, { timestamps: true})
 
 const Question = mongoose.model('Question', questionSchema)
