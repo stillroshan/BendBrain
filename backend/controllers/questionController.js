@@ -5,11 +5,11 @@ import SolvedQuestion from '../models/SolvedQuestion.js'
 // @route   POST /api/questions
 // @access  Private
 const createQuestion = async (req, res) => {
-    const { questionId, title, statement, type, options, answer, hint, explanation, section, difficulty } = req.body
+    const { questionNumber, title, statement, type, options, answer, hint, explanation, section, difficulty } = req.body
 
     try {
         const question = new Question ({
-            questionId,
+            questionNumber,
             title,
             statement,
             type,
@@ -62,11 +62,11 @@ const getQuestions = async (req, res) => {
         const questions = await Question.find(query).limit(limit).skip(skip)
 
         // Fetch solved questions for the user
-        const solvedQuestions = await SolvedQuestion.find({ userId }).select('questionId status')
+        const solvedQuestions = await SolvedQuestion.find({ userId }).select('questionNumber status')
 
         // Map solved questions to a dictionary for quick lookup
         const solvedQuestionsMap = solvedQuestions.reduce((acc, sq) => {
-            acc[sq.questionId] = sq.status
+            acc[sq.questionNumber] = sq.status
             return acc
         }, {})
 
@@ -91,12 +91,12 @@ const getQuestions = async (req, res) => {
     }
 }
 
-// @desc    Get a question by questionId
-// @route   GET /api/questions/:questionId
+// @desc    Get a question by questionNumber
+// @route   GET /api/questions/:questionNumber
 // @access  Public
-const getQuestionByQuestionId = async (req, res) => {
+const getQuestionByquestionNumber = async (req, res) => {
     try {
-        const question = await Question.findOne({ questionId: req.params.questionId })
+        const question = await Question.findOne({ questionNumber: req.params.questionNumber })
 
         if (question) {
             res.json(question)
@@ -109,13 +109,13 @@ const getQuestionByQuestionId = async (req, res) => {
 }
 
 // @desc    Update a question
-// @route   PUT /api/questions/:questionId
+// @route   PUT /api/questions/:questionNumber
 // @access  Private
 const updateQuestion = async (req, res) => {
     const { title, statement, type, options, answer, hint, explanation, section, difficulty, status } = req.body
 
     try {
-        const question = await Question.findOne({ questionId: req.params.questionId })
+        const question = await Question.findOne({ questionNumber: req.params.questionNumber })
 
         if (question) {
             question.title = title || question.title
@@ -127,7 +127,7 @@ const updateQuestion = async (req, res) => {
             question.explanation = explanation || question.explanation
             question.section = section || question.section
             question.difficulty = difficulty || question.difficulty
-            question.questionId = question.questionId
+            question.questionNumber = question.questionNumber
 
             const updatedQuestion = await question.save()
             res.json(updatedQuestion)
@@ -140,11 +140,11 @@ const updateQuestion = async (req, res) => {
 }
 
 // @desc    Delete a question
-// @route   DELETE /api/questions/:questionId
+// @route   DELETE /api/questions/:questionNumber
 // @access  Private
 const deleteQuestion = async (req, res) => {
     try {
-        const question = await Question.findOne({ questionId: req.params.questionId })
+        const question = await Question.findOne({ questionNumber: req.params.questionNumber })
 
         if (question) {
             await question.deleteOne()
@@ -158,23 +158,23 @@ const deleteQuestion = async (req, res) => {
 }
 
 // @desc   Record a solved question
-// @route  POST /api/questions/solved
+// @route  POST /api/questions/:questionNumber/solved
 // @access Private
 const recordSolvedQuestion = async (req, res) => {
-    const { userId, questionId, section, type, difficulty, attempts, timeSpent } = req.body
+    const { userId, section, type, difficulty, attempts, timeSpent, accuracy } = req.body
+    const questionNumber = Number(req.params.questionNumber)
 
     try {
-        // Calculate accuracy and score
-        const accuracy = (1 / attempts) * 100
+        // Calculate score
         const score = accuracy / timeSpent
 
         // Calculate percentile for this question
-        const percentile = await calculatePercentile(questionId, score)
+        const percentile = await calculatePercentile(questionNumber, score)
 
         // Create or update the solved question record
         const solvedQuestion = new SolvedQuestion({
             userId,
-            questionId,
+            questionNumber,
             section,
             type,
             difficulty,
@@ -188,8 +188,12 @@ const recordSolvedQuestion = async (req, res) => {
         await solvedQuestion.save()
 
         // Update the question's average accuracy and time spent
-        const question = await Question.findById(questionId)
-        const solvedQuestions = await SolvedQuestion.find({ questionId })
+        const question = await Question.findOne({ questionNumber })
+        if (!question) {
+            return res.status(404).json({ error: 'Question not found' })
+        }
+
+        const solvedQuestions = await SolvedQuestion.find({ questionNumber })
 
         const totalAccuracy = solvedQuestions.reduce((acc, q) => acc + q.accuracy, 0)
         const totalTimeSpent = solvedQuestions.reduce((acc, q) => acc + q.timeSpent, 0)
@@ -206,13 +210,23 @@ const recordSolvedQuestion = async (req, res) => {
     }
 }
 
-const calculatePercentile = async (questionId, score) => {
-    const allScores = await SolvedQuestion.find({ questionId }).select('scoer')
-    const scoresBelow = allScores.filter(q => q.score < userScore).length
+const calculatePercentile = async (questionNumber, score) => {
+    try {
+        const allScores = await SolvedQuestion.find({ questionNumber }).select('score')
 
-    const percentile = (scoresBelow / allScores.length) * 100
+        if (allScores.length === 0) {
+            return 0 // Return 0 if there are no scores
+        }
 
-    return percentile
+        const scoresBelow = allScores.filter(q => q.score < score).length
+
+        const percentile = (scoresBelow / allScores.length) * 100
+
+        return percentile
+    } catch (error) {
+        console.error('Error calculating percentile:', error)
+        return 0 // Return 0 if there is an error
+    }
 }
 
-export { createQuestion, getQuestions, getQuestionByQuestionId, updateQuestion, deleteQuestion, recordSolvedQuestion }
+export { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion }

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 const questionSchema = new mongoose.Schema({
-    questionId: {
+    questionNumber: {
         type: Number,
         required: true,
         unique: true

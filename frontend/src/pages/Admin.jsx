@@ -119,9 +119,9 @@ const Admin = () => {
                                 <tr 
                                     key={question._id} 
                                     className="hover cursor-pointer" 
-                                    onClick={() => window.location.href = `/admin/question/${question.questionId}`}
+                                    onClick={() => window.location.href = `/admin/question/${question.questionNumber}`}
                                 >
-                                    <td>{question.questionId}</td>
+                                    <td>{question.questionNumber}</td>
                                     <td>{question.title}</td>
                                     <td>{question.section}</td>
                                     <td>{question.difficulty}</td>

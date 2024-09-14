@@ -8,6 +8,8 @@ import Practice from './pages/Practice'
 import Compete from './pages/Compete' 
 import Discuss from './pages/Discuss'
 
+import Question from './pages/Question'
+
 import Admin from './pages/Admin'
 import EditQuestion from './pages/EditQuestion'
 
@@ -30,8 +32,10 @@ function App() {
                 <Route path="/compete" element={<Compete />} />
                 <Route path="/discuss" element={<Discuss />} />
 
+                <Route path="/question/:questionNumber" element={<Question />} />
+
                 <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/question/:questionId" element={<EditQuestion />} />
+                <Route path="/admin/question/:questionNumber" element={<EditQuestion />} />
 
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />

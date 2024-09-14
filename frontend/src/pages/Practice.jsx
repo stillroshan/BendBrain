@@ -163,9 +163,9 @@ const Practice = ({ userId }) => {
                                 <tr 
                                     key={question._id} 
                                     className="hover cursor-pointer" 
-                                    onClick={() => window.location.href = `/question/${question._id}`}
+                                    onClick={() => window.location.href = `/question/${question.questionNumber}`}
                                 >
-                                    <td>{question.questionId}</td>
+                                    <td>{question.questionNumber}</td>
                                     <td>{question.title}</td>
                                     <td>{question.difficulty}</td>
                                     <td>{question.type}</td>

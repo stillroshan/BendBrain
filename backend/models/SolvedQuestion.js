@@ -6,24 +6,24 @@ const solvedQuestionSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    questionId: {
-        type: mongoose.Schema.Types.ObjectId,
+    questionNumber: {
+        type: Number,
         ref: 'Question',
         required: true
     },
     section: {
         type: String,
-        Enum: ['Numerical Ability', 'Verbal Reasoning', 'Non-verbal Reasoning', 'Verbal Ability', 'Quantitative Aptitude', 'Data Interpretation'],
+        enum: ['Numerical Ability', 'Verbal Reasoning', 'Non-verbal Reasoning', 'Verbal Ability', 'Quantitative Aptitude', 'Data Interpretation'],
         required: true
     },
     type: {
         type: String,
-        Enum: ['MCQ', 'Integer'],
+        enum: ['MCQ', 'Integer'],
         required: true
     },
     difficulty: {
         type: String,
-        Enum: ['Easy', 'Medium', 'Hard'],
+        enum: ['Easy', 'Medium', 'Hard'],
         required: true
     },
     attempts: {

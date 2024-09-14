@@ -1,5 +1,5 @@
 import express from 'express'
-import { createQuestion, getQuestions, getQuestionByQuestionId, updateQuestion, deleteQuestion, recordSolvedQuestion } from '../controllers/questionController.js'
+import { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion } from '../controllers/questionController.js'
 import { protect, admin } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
@@ -8,12 +8,12 @@ router.route('/')
     .post(protect, admin, createQuestion)
     .get(getQuestions)
 
-router.route('/:questionId')
-    .get(getQuestionByQuestionId)
+router.route('/:questionNumber')
+    .get(getQuestionByquestionNumber)
     .put(protect, admin, updateQuestion)
     .delete(protect, admin, deleteQuestion)
 
-router.route('/solved')
+router.route('/:questionNumber/solved')
     .post(protect, recordSolvedQuestion)
 
 export default router

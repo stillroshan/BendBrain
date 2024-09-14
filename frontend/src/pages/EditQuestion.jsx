@@ -4,12 +4,12 @@ import axios from 'axios'
 import { AuthContext } from '../context/AuthContext'
 
 const EditQuestion = () => {
-    const { questionId } = useParams()
+    const { questionNumber } = useParams()
     const navigate = useNavigate()
     const { token, user } = useContext(AuthContext)
     const [isNewQuestion, setIsNewQuestion] = useState(false)
     const [question, setQuestion] = useState({
-        questionId: '',
+        questionNumber: '',
         title: '',
         statement: '',
         type: 'MCQ',
@@ -22,13 +22,13 @@ const EditQuestion = () => {
     })
 
     useEffect(() => {
-        if (questionId === 'new') {
+        if (questionNumber === 'new') {
             setIsNewQuestion(true)
         } else {
             setIsNewQuestion(false)
             const fetchQuestion = async () => {
                 try {
-                    const { data } = await axios.get(`/api/questions/${questionId}`)
+                    const { data } = await axios.get(`/api/questions/${questionNumber}`)
                     setQuestion(data)
                 } catch (error) {
                     console.error('Error fetching question:', error)
@@ -38,7 +38,7 @@ const EditQuestion = () => {
 
             fetchQuestion()
         }
-    }, [questionId])
+    }, [questionNumber])
 
     const handleChange = (e) => {
         const { name, value } = e.target
@@ -88,7 +88,7 @@ const EditQuestion = () => {
                     },
                 })
             } else {
-                await axios.put(`/api/questions/${questionId}`, questionData, {
+                await axios.put(`/api/questions/${questionNumber}`, questionData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -106,7 +106,7 @@ const EditQuestion = () => {
             return
         }
         try {
-            await axios.delete(`/api/questions/${questionId}`, {
+            await axios.delete(`/api/questions/${questionNumber}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -124,16 +124,16 @@ const EditQuestion = () => {
             </h1>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Question ID */}
+                {/* Question Number */}
                 <div className="form-control flex flex-row items-center">
                     <label className="label w-1/4 text-right">
-                        <span className="label-text">Question ID</span>
+                        <span className="label-text">Question Number</span>
                     </label>
                     <input 
-                        name="questionId" 
-                        value={question.questionId} 
+                        name="questionNumber" 
+                        value={question.questionNumber} 
                         onChange={handleChange} 
-                        placeholder="Question ID" 
+                        placeholder="Question Number" 
                         className="input input-bordered w-3/4" 
                         required 
                     />
