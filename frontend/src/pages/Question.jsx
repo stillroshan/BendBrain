@@ -102,7 +102,7 @@ const QuestionPage = () => {
             {/* Options for MCQ or Input for Integer */}
             {question.type === 'MCQ' ? (
                 <div className="grid grid-cols-1 gap-4 mb-6">
-                    {question.options.split(',').map((option, index) => (
+                    {question.options.map((option, index) => (
                         <div
                             key={index}
                             className={`p-3 border rounded-lg cursor-pointer hover:border-blue-500 transition duration-300 

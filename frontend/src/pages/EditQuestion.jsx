@@ -73,22 +73,16 @@ const EditQuestion = () => {
             alert('Please fill out all MCQ options.')
             return
         }
-    
-        // Convert options array to a string
-        const questionData = {
-            ...question,
-            options: question.options.join(','),
-        }
 
         try {
             if (isNewQuestion) {
-                await axios.post('/api/questions', questionData, {
+                await axios.post('/api/questions', question, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 })
             } else {
-                await axios.put(`/api/questions/${questionNumber}`, questionData, {
+                await axios.put(`/api/questions/${questionNumber}`, question, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
