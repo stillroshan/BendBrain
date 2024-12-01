@@ -20,7 +20,7 @@ const questionSchema = new mongoose.Schema({
         required: true
     },
     options: {
-        type: String,
+        type: [String],
         required: function() {
             return this.type === 'MCQ'
         }
