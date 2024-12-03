@@ -3,7 +3,7 @@ import axios from 'axios'
 import { AuthContext } from '../context/AuthContext'
 
 const ProfilePictureUpload = () => {
-  const { token } = useContext(AuthContext)
+  const { token, setUser } = useContext(AuthContext)
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
 
@@ -24,6 +24,13 @@ const ProfilePictureUpload = () => {
           Authorization: `Bearer ${token}`,
         },
       })
+
+      // Update the user context with the new profile picture
+      setUser(prevUser => ({
+        ...prevUser,
+        profilePicture: Response.data.profilePicture
+      }))
+      
       alert('Profile picture uploaded successfully')
     } catch (error) {
       console.error('Error uploading profile picture:', error)
@@ -32,9 +39,9 @@ const ProfilePictureUpload = () => {
 
   return (
     <div>
-      <input type="file" onChange={handleFileChange} />
-      {preview && <img src={preview} alt="Profile Preview" />}
-      <button onClick={handleUpload}>Upload</button>
+      <input type="file" onChange={handleFileChange} accept="image/*" />
+      {preview && <img src={preview} alt="Profile Preview" className="w-32 h-32 object-cover rounded-full my-2" />}
+      <button onClick={handleUpload} className="btn btn-primary">Upload</button>
     </div>
   )
 }
