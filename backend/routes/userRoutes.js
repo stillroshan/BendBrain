@@ -1,5 +1,5 @@
 import express from 'express'
-import { registerUser, authUser, getUserProfile, forgotPassword, resetPassword, updateUserProfile } from '../controllers/userController.js'
+import { registerUser, authUser, getUserProfile, forgotPassword, resetPassword, updateUserProfile, uploadProfilePicture } from '../controllers/userController.js'
 import { protect } from '../middleware/authMiddleware.js'
 
 // Create a new router instance
@@ -34,5 +34,10 @@ router.put('/resetpassword/:token', resetPassword)
 // @route   PUT /api/profile
 // @access  Private
 router.route('/profile').put(protect, updateUserProfile)
+
+// @desc    Upload profile picture
+// @route   POST /api/profile/upload
+// @access  Private
+router.post('/profile/upload', protect, uploadProfilePicture)
 
 export default router

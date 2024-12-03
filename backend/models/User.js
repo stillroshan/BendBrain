@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     rating: {
         type: Number,
         default: 800
+    },
+    profilePicture: {
+        type: String,
+        default: null,
     }
 }, { 
     timestamps: true

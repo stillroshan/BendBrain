@@ -13,11 +13,13 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-fileupload": "^1.5.1",
     "express-session": "^1.18.0",
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",

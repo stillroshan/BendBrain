@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 import { AuthContext } from '../context/AuthContext'
+import ProfilePictureUpload from '../components/ProfilePictureUpload'
 
 const Profile = () => {
   const { user, token } = useContext(AuthContext)
@@ -54,7 +55,7 @@ const Profile = () => {
           Authorization: `Bearer ${token}`,
         },
       }
-      const { data } = await axios.put('/api/profile', profile, config)
+      await axios.put('/api/profile', profile, config)
       setMessage('Profile updated successfully')
     } catch (err) {
       console.error('Error updating profile:', err) // Log the error
@@ -70,6 +71,7 @@ const Profile = () => {
     <div className="flex items-center justify-center min-h-screen bg-base-200">
       <div className="w-full max-w-md p-8 space-y-3 rounded-xl bg-base-100 shadow-lg">
         <h1 className="text-3xl font-bold text-center">Profile</h1>
+        <ProfilePictureUpload />
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="form-control">
             <label className="label">

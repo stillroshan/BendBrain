@@ -231,20 +231,20 @@ const Practice = ({ userId }) => {
                 <div className="card shadow-lg bg-base-100 p-2">
                     <h2 className="text-3xl font-bold mb-4 pt-4 pl-4 text-primary">Your Progress</h2>
                     {progress ? (
-                        <div className="stats shadow grid grid-rows-2 gap-4">
+                        <div className="stats shadow grid grid-rows-2 gap-2">
                             <div className="stat">
-                                <div className="stat-title font-bold">Questions Solved</div>
+                                <div className="stat-title font-bold">Questions</div>
                                 <div className="stat-value text-primary">{progress.totalQuestionsSolved}</div>
                             </div>
                             <div className="stat">
-                                <div className="stat-title font-bold">Average Accuracy</div>
+                                <div className="stat-title font-bold">Accuracy</div>
                                 <div className="stat-value text-primary">{progress.averageAccuracy.toFixed(2)}</div>
                                 <div className="stat-desc font-bold">%</div>
                             </div>
                             <div className="stat">
                                 <div className="stat-title font-bold">Time Spent</div>
-                                <div className="stat-value text-primary">{progress.totalTimeSpent.toFixed(2)}</div>
-                                <div className="stat-desc font-semibold">seconds</div>
+                                <div className="stat-value text-primary">{(progress.totalTimeSpent/60).toFixed(2)}</div>
+                                <div className="stat-desc font-semibold">minutes</div>
                             </div>
                             <div className="stat">
                                 <div className="stat-title font-bold">Average Time</div>

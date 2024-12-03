@@ -5,6 +5,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import passport from './config/passport.js'
 import session from 'express-session'
+import fileUpload from 'express-fileupload'
 
 // Load environment variables
 dotenv.config()
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true })) // for parsing URL-encoded paylo
 app.use(session({ secret: 'secret', resave: false, saveUninitialized: true }))
 app.use(passport.initialize())
 app.use(passport.session())
+app.use(fileUpload({ useTempFiles: true })) // for handling file uploads
 
 // Routes
 app.get('/', (req, res) => {

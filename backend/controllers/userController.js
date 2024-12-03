@@ -1,6 +1,7 @@
 import User from '../models/User.js'
 import crypto from 'crypto'
 import sendEmail from '../utils/sendEmail.js'
+import cloudinary from '../config/cloudinaryConfig.js'
 
 // @desc    Register a new user
 // @route   POST /api/signup
@@ -167,4 +168,28 @@ const updateUserProfile = async (req, res) => {
     }
 }
 
-export { registerUser, authUser, getUserProfile, forgotPassword, resetPassword, updateUserProfile }
+// @desc    Upload profile picture
+// @route   POST /api/profile/upload
+// @access  Private
+const uploadProfilePicture = async (req, res) => {
+    try {
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ message: 'No file uploaded' })
+      }
+
+      const file = req.files.file
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: 'profile_pictures',
+      })
+  
+      const user = await User.findById(req.user._id)
+      user.profilePicture = result.secure_url
+      await user.save()
+  
+      res.json({ profilePicture: user.profilePicture })
+    } catch (error) {
+      res.status(500).json({ message: error.message })
+    }
+}
+
+export { registerUser, authUser, getUserProfile, forgotPassword, resetPassword, updateUserProfile, uploadProfilePicture }
