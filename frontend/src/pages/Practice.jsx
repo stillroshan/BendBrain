@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import PropTypes from 'prop-types'
 import axios from 'axios'
+import { AuthContext } from '../context/AuthContext'
 
 const Practice = ({ userId }) => {
+    const { token } = useContext(AuthContext)
     const [questions, setQuestions] = useState([])
     const [filters, setFilters] = useState({
         section: '',
@@ -13,6 +15,7 @@ const Practice = ({ userId }) => {
     })
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const [progress, setProgress] = useState(null)
 
     // fetch questions based on filters
     useEffect(() => {
@@ -55,11 +58,28 @@ const Practice = ({ userId }) => {
         setCurrentPage(page)
     }
 
+    useEffect(() => {
+        const fetchProgress = async () => {
+            try {
+                const response = await axios.get('/api/dashboard', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                setProgress(response.data)
+            } catch (error) {
+                console.error('Error fetching progress:', error)
+            }
+        }
+
+        fetchProgress()
+    }, [token])
+
     return (
         <div className="flex">
 
             {/* Main Section */}
-            <main className="w-full md:w-2/3 p-4">
+            <main className="w-full md:w-3/4 p-4">
                 <h1 className="text-3xl font-bold mb-4">Practice</h1>
 
                 {/* Card Buttons */}
@@ -206,9 +226,36 @@ const Practice = ({ userId }) => {
                 </div>
             </main>
 
-            {/* Aside Section (30% width placeholder) */}
-            <aside className="w-1/3 p-4">
-                {/* to be implemented later */}
+            {/* USER PROGRESS DASHBOARD || Aside Section (30% width placeholder) */}
+            <aside className="w-1/4 p-2 fixed right-0 top-16 h-full overflow-y-auto bg-base-200">
+                <div className="card shadow-lg bg-base-100 p-2">
+                    <h2 className="text-3xl font-bold mb-4 pt-4 pl-4 text-primary">Your Progress</h2>
+                    {progress ? (
+                        <div className="stats shadow grid grid-rows-2 gap-4">
+                            <div className="stat">
+                                <div className="stat-title font-bold">Questions Solved</div>
+                                <div className="stat-value text-primary">{progress.totalQuestionsSolved}</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title font-bold">Average Accuracy</div>
+                                <div className="stat-value text-primary">{progress.averageAccuracy.toFixed(2)}</div>
+                                <div className="stat-desc font-bold">%</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title font-bold">Time Spent</div>
+                                <div className="stat-value text-primary">{progress.totalTimeSpent.toFixed(2)}</div>
+                                <div className="stat-desc font-semibold">seconds</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title font-bold">Average Time</div>
+                                <div className="stat-value text-primary">{progress.averageTimeSpent.toFixed(2)}</div>
+                                <div className="stat-desc font-semibold">seconds</div>
+                            </div>
+                        </div>
+                    ) : (
+                        <p>Loading</p>
+                    )}
+                </div>
             </aside>
 
         </div>

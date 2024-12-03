@@ -22,12 +22,12 @@ const getUserProgress = async (req, res) => {
         const averageAccuracy = totalQuestionsSolved ?( totalAccuracy / totalQuestionsSolved ) : 0
         const averageTimeSpent = totalQuestionsSolved ? ( totalTimeSpent / totalQuestionsSolved ) : 0
 
-        return {
+        res.json({
             totalQuestionsSolved,
             totalTimeSpent,
             averageAccuracy,
             averageTimeSpent
-        }
+        })
     } catch (error) {
         res.status(500).json({ message: error.message})
     }
