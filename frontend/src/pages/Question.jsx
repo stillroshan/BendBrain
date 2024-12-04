@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import { AuthContext } from '../context/AuthContext'
+import QuestionDiscussion from '../components/QuestionDiscussion'
 
 const QuestionPage = () => {
     const { questionNumber } = useParams()
@@ -155,9 +156,11 @@ const QuestionPage = () => {
                     <p className="text-lg">The correct answer is: <strong>{question.answer}</strong></p>
                 </div>
             )}
+
+            <QuestionDiscussion questionId={questionNumber} />
+            
         </div>
-    )
-        
+    )    
 }
 
 export default QuestionPage

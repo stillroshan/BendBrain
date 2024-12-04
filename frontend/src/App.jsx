@@ -7,6 +7,8 @@ import Learn from './pages/Learn'
 import Practice from './pages/Practice' 
 import Compete from './pages/Compete' 
 import Discuss from './pages/Discuss'
+import NewDiscussion from './pages/NewDiscussion'
+import DiscussionDetail from './pages/DiscussionDetail'
 
 import Question from './pages/Question'
 
@@ -31,8 +33,9 @@ function App() {
                 <Route path="/practice" element={<Practice />} />
                 <Route path="/compete" element={<Compete />} />
                 <Route path="/discuss" element={<Discuss />} />
-
+                <Route path="/discuss/new" element={<NewDiscussion />} />
                 <Route path="/question/:questionNumber" element={<Question />} />
+                <Route path="/discuss/:id" element={<DiscussionDetail />} />
 
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/question/:questionNumber" element={<EditQuestion />} />

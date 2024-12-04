@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser'
 import passport from './config/passport.js'
 import session from 'express-session'
 import fileUpload from 'express-fileupload'
+import { createServer } from 'http'
+import setupWebSocket from './websocket.js'
 
 // Load environment variables
 dotenv.config()
@@ -48,8 +50,14 @@ app.use('/api/questions', questionRoutes)
 import dashboardRoutes from './routes/dashboardRoutes.js'
 app.use('/api/dashboard', dashboardRoutes)
 
+import discussionRoutes from './routes/discussionRoutes.js'
+app.use('/api/discussions', discussionRoutes)
+
+const server = createServer(app)
+const wss = setupWebSocket(server)
+
 // Listen
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
