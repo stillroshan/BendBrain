@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext } from 'react'
 import PropTypes from 'prop-types'
 import axios from 'axios'
+import ActivityCalendar from '../components/ActivityCalendar'
 import { AuthContext } from '../context/AuthContext'
 
-const Practice = ({ userId }) => {
-    const { token } = useContext(AuthContext)
+const Practice = () => {
+    const { user, token } = useContext(AuthContext)
     const [questions, setQuestions] = useState([])
     const [filters, setFilters] = useState({
         section: '',
@@ -31,7 +32,10 @@ const Practice = ({ userId }) => {
                         search,
                         page: currentPage,
                         limit: 50,
-                        userId
+                        userId: user?._id
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`
                     }
                 })
                 setQuestions(response.data.questions || [])
@@ -43,7 +47,7 @@ const Practice = ({ userId }) => {
         }
 
         fetchQuestions()
-    }, [filters, currentPage, userId])
+    }, [filters, currentPage, user?._id, token])
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target
@@ -56,6 +60,35 @@ const Practice = ({ userId }) => {
 
     const handlePageChange = (page) => {
         setCurrentPage(page)
+    }
+
+    const handlePickOne = async () => {
+        try {
+            const { section, difficulty, type, status, search } = filters
+            const response = await axios.get('/api/questions/random', {
+                params: {
+                    section,
+                    difficulty,
+                    type,
+                    status,
+                    search,
+                    userId: user?._id
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            
+            if (response.data.questionNumber) {
+                window.location.href = `/question/${response.data.questionNumber}`
+            } else {
+                // Show error message if no questions match the filters
+                alert('No questions available with the selected filters')
+            }
+        } catch (error) {
+            console.error('Error fetching random question:', error)
+            alert('Error fetching random question')
+        }
     }
 
     useEffect(() => {
@@ -79,7 +112,7 @@ const Practice = ({ userId }) => {
         <div className="flex">
 
             {/* Main Section */}
-            <main className="w-full md:w-3/4 p-4">
+            <main className="w-full md:w-3/4 p-8">
                 <h1 className="text-3xl font-bold mb-4">Practice</h1>
 
                 {/* Card Buttons */}
@@ -116,9 +149,8 @@ const Practice = ({ userId }) => {
                 </div>
 
                 {/* Filter Buttons */}
-                <div className="flex items-center mb-4 space-x-4">
-                    {/* Section Dropdown */}
-                    <select name="section" className="select select-bordered" onChange={handleFilterChange}>
+                <div className="flex flex-wrap items-center mb-4 gap-2">
+                    <select name="section" className="select select-bordered flex-1 min-w-[200px]" onChange={handleFilterChange}>
                         <option value="">Section</option>
                         <option value="Numerical Ability">Numerical Ability</option>
                         <option value="Verbal Reasoning">Verbal Reasoning</option>
@@ -128,40 +160,35 @@ const Practice = ({ userId }) => {
                         <option value="Data Interpretation">Data Interpretation</option>
                     </select>
 
-                    {/* Difficulty Dropdown */}
-                    <select name="difficulty" className="select select-bordered" onChange={handleFilterChange}>
+                    <select name="difficulty" className="select select-bordered flex-1 min-w-[150px]" onChange={handleFilterChange}>
                         <option value="">Difficulty</option>
                         <option value="Easy">Easy</option>
                         <option value="Medium">Medium</option>
                         <option value="Hard">Hard</option>
                     </select>
                     
-                    {/* Status Dropdown */}
-                    <select name="status" className="select select-bordered" onChange={handleFilterChange}>
+                    <select name="status" className="select select-bordered flex-1 min-w-[150px]" onChange={handleFilterChange}>
                         <option value="">Status</option>
                         <option value="Solved">Solved</option>
                         <option value="Unsolved">Unsolved</option>
                         <option value="Attempted">Attempted</option>
                     </select>
                     
-                    {/* Type Dropdown */}
-                    <select name="type" className="select select-bordered" onChange={handleFilterChange}>
+                    <select name="type" className="select select-bordered flex-1 min-w-[150px]" onChange={handleFilterChange}>
                         <option value="">Type</option>
                         <option value="MCQ">MCQ</option>
                         <option value="Integer">Integer</option>
                     </select>
 
-                    {/* Search Bar */}
                     <input 
                         type="text" 
                         name="search"
                         placeholder="Search questions" 
-                        className="input input-bordered flex-grow"
+                        className="input input-bordered flex-1 min-w-[200px]"
                         onChange={handleFilterChange} 
                     />
                     
-                    {/* Random Button */}
-                    <button className="btn btn-primary">Pick One</button>
+                    <button className="btn btn-primary min-w-[120px]" onClick={handlePickOne}>Pick One</button>
                 </div>
 
                 {/* Questions Table */}
@@ -227,34 +254,41 @@ const Practice = ({ userId }) => {
             </main>
 
             {/* USER PROGRESS DASHBOARD || Aside Section (30% width placeholder) */}
-            <aside className="w-1/4 p-2 fixed right-0 top-16 h-full overflow-y-auto bg-base-200">
-                <div className="card shadow-lg bg-base-100 p-2">
-                    <h2 className="text-3xl font-bold mb-4 pt-4 pl-4 text-primary">Your Progress</h2>
-                    {progress ? (
-                        <div className="stats shadow grid grid-rows-2 gap-2">
-                            <div className="stat">
-                                <div className="stat-title font-bold">Questions</div>
-                                <div className="stat-value text-primary">{progress.totalQuestionsSolved}</div>
+            <aside className="hidden md:block w-1/4 p-4 fixed right-0 top-16 h-full overflow-y-auto bg-base-200">
+                <div className="space-y-2">
+                    {/* User Progress Card */}
+                    <div className="card shadow-lg bg-base-100 p-2 mb-4">
+                        <h2 className="text-3xl font-bold mb-2 pt-4 pl-4">Your Progress</h2>
+                        {progress ? (
+                            <div className="stats shadow grid grid-rows-2">
+                                <div className="stat">
+                                    <div className="stat-title font-bold">Questions</div>
+                                    <div className="stat-value text-3xl">{progress.totalQuestionsSolved}</div>
+                                    <div className="stat-desc font-semibold">solved</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="stat-title font-bold">Accuracy</div>
+                                    <div className="stat-value text-3xl">{progress.averageAccuracy.toFixed(2)}</div>
+                                    <div className="stat-desc font-bold">%</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="stat-title font-bold">Time Spent</div>
+                                    <div className="stat-value text-3xl">{(progress.totalTimeSpent/60).toFixed(2)}</div>
+                                    <div className="stat-desc font-semibold">minutes</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="stat-title font-bold">Average Time</div>
+                                    <div className="stat-value text-3xl">{progress.averageTimeSpent.toFixed(2)}</div>
+                                    <div className="stat-desc font-semibold">seconds</div>
+                                </div>
                             </div>
-                            <div className="stat">
-                                <div className="stat-title font-bold">Accuracy</div>
-                                <div className="stat-value text-primary">{progress.averageAccuracy.toFixed(2)}</div>
-                                <div className="stat-desc font-bold">%</div>
-                            </div>
-                            <div className="stat">
-                                <div className="stat-title font-bold">Time Spent</div>
-                                <div className="stat-value text-primary">{(progress.totalTimeSpent/60).toFixed(2)}</div>
-                                <div className="stat-desc font-semibold">minutes</div>
-                            </div>
-                            <div className="stat">
-                                <div className="stat-title font-bold">Average Time</div>
-                                <div className="stat-value text-primary">{progress.averageTimeSpent.toFixed(2)}</div>
-                                <div className="stat-desc font-semibold">seconds</div>
-                            </div>
-                        </div>
-                    ) : (
-                        <p>Loading</p>
-                    )}
+                        ) : (
+                            <p>Loading...</p>
+                        )}
+                    </div>
+
+                    {/* Activity Calendar */}
+                    {user && <ActivityCalendar userId={user._id} />}
                 </div>
             </aside>
 

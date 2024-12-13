@@ -50,6 +50,11 @@ const solvedQuestionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    status: {
+        type: String,
+        enum: ['Solved', 'Attempted', 'Unsolved'],
+        default: 'Unsolved'
+    },
     pastAttempts: [
         {
             accuracy: Number,

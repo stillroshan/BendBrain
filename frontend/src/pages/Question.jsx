@@ -52,6 +52,7 @@ const QuestionPage = () => {
                 attempts: attempts,
                 timeSpent: timeSpent,
                 accuracy: isAnswerCorrect ? 100 : 0,
+                status: isAnswerCorrect ? 'Solved' : 'Attempted'
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,

@@ -59,10 +59,10 @@ const getQuestions = async (req, res) => {
 
     try {
         const totalQuestions = await Question.countDocuments(query)
-        const questions = await Question.find(query).limit(limit).skip(skip)
+        const questions = await Question.find(query).sort({ questionNumber: 1 }).limit(limit).skip(skip)
 
         // Fetch solved questions for the user
-        const solvedQuestions = await SolvedQuestion.find({ userId }).select('questionNumber status')
+        const solvedQuestions = await SolvedQuestion.find({ userId })
 
         // Map solved questions to a dictionary for quick lookup
         const solvedQuestionsMap = solvedQuestions.reduce((acc, sq) => {
@@ -73,7 +73,7 @@ const getQuestions = async (req, res) => {
         // Add status to each question
         const questionsWithStatus = questions.map(question => ({
             ...question.toObject(),
-            status: solvedQuestionsMap[question._id] || 'Unsolved'
+            status: solvedQuestionsMap[question.questionNumber] || 'Unsolved'
         }))
 
         // Filter questions by status if the status filter is applied
@@ -182,7 +182,8 @@ const recordSolvedQuestion = async (req, res) => {
             accuracy,
             timeSpent,
             score,
-            percentile
+            percentile,
+            status: accuracy > 0 ? 'Solved' : 'Attempted'
         })
 
         await solvedQuestion.save()
@@ -229,4 +230,63 @@ const calculatePercentile = async (questionNumber, score) => {
     }
 }
 
-export { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion }
+// @desc    Get a random question based on filters
+// @route   GET /api/questions/random
+// @access  Public
+const getRandomQuestion = async (req, res) => {
+    try {
+        const { section, difficulty, type, status, userId } = req.query
+        let query = {}
+
+        // Add filters to query if they exist
+        if (section) query.section = section
+        if (difficulty) query.difficulty = difficulty
+        if (type) query.type = type
+
+        // If status filter is applied and userId is provided
+        if (status && userId) {
+            // Get all matching questions first
+            const questions = await Question.find(query)
+            const solvedQuestions = await SolvedQuestion.find({ userId })
+            
+            // Create a map of question statuses
+            const solvedQuestionsMap = solvedQuestions.reduce((acc, sq) => {
+                acc[sq.questionNumber] = sq.status
+                return acc
+            }, {})
+
+            // Filter questions based on status
+            const filteredQuestions = questions.filter(question => {
+                const questionStatus = solvedQuestionsMap[question.questionNumber] || 'Unsolved'
+                return status === questionStatus
+            })
+
+            if (filteredQuestions.length === 0) {
+                return res.status(404).json({ message: 'No questions found matching the criteria' })
+            }
+
+            // Pick a random question from filtered list
+            const randomIndex = Math.floor(Math.random() * filteredQuestions.length)
+            return res.json(filteredQuestions[randomIndex])
+        }
+
+        // If no status filter or no userId, get count of matching questions
+        const count = await Question.countDocuments(query)
+        if (count === 0) {
+            return res.status(404).json({ message: 'No questions found matching the criteria' })
+        }
+
+        // Get a random question using aggregation
+        const randomQuestion = await Question.aggregate([
+            { $match: query },
+            { $sample: { size: 1 } }
+        ])
+
+        res.json(randomQuestion[0])
+    } catch (error) {
+        console.error('Error getting random question:', error)
+        res.status(500).json({ message: error.message })
+    }
+}
+
+export { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion, getRandomQuestion }
