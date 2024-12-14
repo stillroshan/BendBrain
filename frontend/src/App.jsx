@@ -11,6 +11,9 @@ import NewDiscussion from './pages/NewDiscussion'
 import DiscussionDetail from './pages/DiscussionDetail'
 
 import Question from './pages/Question'
+import QuestionLists from './pages/QuestionLists'
+import QuestionListDetail from './pages/QuestionListDetail'
+import CreateEditList from './pages/CreateEditList'
 
 import Admin from './pages/Admin'
 import EditQuestion from './pages/EditQuestion'
@@ -32,10 +35,15 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/learn" element={<Learn />} />
                 <Route path="/practice" element={<Practice />} />
+                <Route path="/question/:questionNumber" element={<Question />} />
+                <Route path="/lists" element={<QuestionLists />} />
+                <Route path="/lists/:id" element={<QuestionListDetail />} />
+                <Route path="/lists/new" element={<CreateEditList />} />
+
                 <Route path="/compete" element={<Compete />} />
+
                 <Route path="/discuss" element={<Discuss />} />
                 <Route path="/discuss/new" element={<NewDiscussion />} />
-                <Route path="/question/:questionNumber" element={<Question />} />
                 <Route path="/discuss/:id" element={<DiscussionDetail />} />
 
                 <Route path="/admin" element={<Admin />} />
