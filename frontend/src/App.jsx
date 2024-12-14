@@ -16,6 +16,7 @@ import Admin from './pages/Admin'
 import EditQuestion from './pages/EditQuestion'
 
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/admin/question/:questionNumber" element={<EditQuestion />} />
 
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />

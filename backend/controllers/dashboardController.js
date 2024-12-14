@@ -13,8 +13,10 @@ const getUserProgress = async (req, res) => {
         if (section) query.section = section
         if (difficulty) query.difficulty = difficulty
 
-        // Get unique questions count
-        const uniqueQuestions = await SolvedQuestion.distinct('questionNumber', query)
+        // Get unique solved questions count (only status='Solved')
+        const uniqueQuestions = await SolvedQuestion.distinct('questionNumber', { ...query, status: 'Solved' })
+        
+        // Get all attempts for other metrics
         const solvedQuestions = await SolvedQuestion.find(query)
 
         // Calculate the progress metrics

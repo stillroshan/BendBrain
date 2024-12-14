@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import axios from 'axios'
@@ -17,11 +17,7 @@ const DiscussionDetail = () => {
     const [newReply, setNewReply] = useState('')
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        fetchDiscussion()
-    }, [id])
-
-    const fetchDiscussion = async () => {
+    const fetchDiscussion = useCallback(async () => {
         try {
             const response = await axios.get(`/api/discussions/${id}`)
             setDiscussion(response.data)
@@ -30,7 +26,11 @@ const DiscussionDetail = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [id])
+
+    useEffect(() => {
+        fetchDiscussion()
+    }, [fetchDiscussion])
 
     const handleReply = async () => {
         const token = localStorage.getItem('authToken')

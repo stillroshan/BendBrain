@@ -44,6 +44,18 @@ const QuestionPage = () => {
         const attempts = 1 // For now, we are not handling multiple attempts
 
         try {
+            // First, check if the question was previously solved
+            const previousSolvedResponse = await axios.get(`/api/questions/${questionNumber}/solved`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            
+            const wasPreviouslySolved = previousSolvedResponse.data.status === 'Solved'
+            
+            // Only mark as 'Attempted' if it wasn't previously solved
+            const newStatus = isAnswerCorrect ? 'Solved' : (wasPreviouslySolved ? 'Solved' : 'Attempted')
+
             await axios.post(`/api/questions/${questionNumber}/solved`, {
                 userId: user._id,
                 section: question.section,
@@ -52,14 +64,14 @@ const QuestionPage = () => {
                 attempts: attempts,
                 timeSpent: timeSpent,
                 accuracy: isAnswerCorrect ? 100 : 0,
-                status: isAnswerCorrect ? 'Solved' : 'Attempted'
+                status: newStatus
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             })
         } catch (error) {
-            console.error('Error saving solved question:', error);
+            console.error('Error saving solved question:', error)
         }
     }
 

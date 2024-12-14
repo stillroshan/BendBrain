@@ -53,7 +53,7 @@ const Admin = () => {
     }
 
     return (
-        <div className="flex">
+        <div className="flex mt-4">
 
             {/* Main Section */}
             <main className="w-full md:w-2/3 p-4">

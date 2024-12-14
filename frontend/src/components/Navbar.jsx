@@ -1,10 +1,19 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import ThemeSelector from '../utils/ThemeSelector'
 import { useContext } from 'react'
 import { AuthContext } from '../context/AuthContext.jsx'
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext)
+    const location = useLocation()
+
+    // Check if current path matches /question/{number}
+    const isQuestionPage = /^\/question\/\d+$/.test(location.pathname)
+
+    // Don't render navbar on question page
+    if (isQuestionPage) {
+        return null
+    }
 
     return (
         <nav>

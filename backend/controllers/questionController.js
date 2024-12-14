@@ -289,4 +289,22 @@ const getRandomQuestion = async (req, res) => {
     }
 }
 
-export { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion, getRandomQuestion }
+const getSolvedStatus = async (req, res) => {
+    try {
+        const questionNumber = Number(req.params.questionNumber)
+        const userId = req.user._id
+
+        const solvedQuestion = await SolvedQuestion.findOne({
+            questionNumber,
+            userId
+        })
+
+        res.json({
+            status: solvedQuestion ? solvedQuestion.status : 'Unsolved'
+        })
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export { createQuestion, getQuestions, getQuestionByquestionNumber, updateQuestion, deleteQuestion, recordSolvedQuestion, getRandomQuestion, getSolvedStatus }
