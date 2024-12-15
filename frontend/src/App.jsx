@@ -3,17 +3,25 @@ import { Routes, Route} from 'react-router-dom'
 import Navbar from './components/Navbar'
 
 import Home from './pages/Home' 
-import Learn from './pages/Learn' 
-import Practice from './pages/Practice' 
-import Compete from './pages/Compete' 
-import Discuss from './pages/Discuss'
-import NewDiscussion from './pages/NewDiscussion'
-import DiscussionDetail from './pages/DiscussionDetail'
 
+import Learn from './pages/Learn'
+import CourseDetail from './pages/CourseDetail'
+import SubjectDetail from './pages/SubjectDetail'
+import TopicContent from './components/learning/TopicContent'
+
+import Practice from './pages/Practice' 
 import Question from './pages/Question'
 import QuestionLists from './pages/QuestionLists'
 import QuestionListDetail from './pages/QuestionListDetail'
 import CreateEditList from './pages/CreateEditList'
+
+import Compete from './pages/Compete' 
+
+import Discuss from './pages/Discuss'
+import NewDiscussion from './pages/NewDiscussion'
+import DiscussionDetail from './pages/DiscussionDetail'
+
+
 
 import Admin from './pages/Admin'
 import EditQuestion from './pages/EditQuestion'
@@ -33,7 +41,12 @@ function App() {
             <Navbar />
             <Routes>
                 <Route path="/" element={<Home />} />
+
                 <Route path="/learn" element={<Learn />} />
+                <Route path="/learn/:courseId" element={<CourseDetail />} />
+                <Route path="/learn/:courseId/:subjectId" element={<SubjectDetail />} />
+                <Route path="/learn/:courseId/:subjectId/:topicId" element={<TopicContent />} />
+
                 <Route path="/practice" element={<Practice />} />
                 <Route path="/question/:questionNumber" element={<Question />} />
                 <Route path="/lists" element={<QuestionLists />} />

@@ -112,7 +112,7 @@ const EditQuestion = () => {
     }
 
     return (
-        <div className="container mx-auto p-4 max-w-4xl">
+        <div className="container mx-auto p-4 max-w-4xl mt-16">
             <h1 className="text-3xl font-bold mb-4">
                 {isNewQuestion ? 'Create Question' : 'Edit Question'}
             </h1>
