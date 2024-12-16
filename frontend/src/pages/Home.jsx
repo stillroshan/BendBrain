@@ -8,7 +8,7 @@ const Home = () => {
 
   // Generic Home Page for non-logged-in users
   const GuestHomePage = () => (
-    <div className="home-page">
+    <div className="home-page mt-16">
       <section className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">
           <div className="max-w-md">
@@ -27,7 +27,7 @@ const Home = () => {
 
   // Personalized Home Page for logged-in users
   const LoggedInHomePage = () => (
-    <div className="home-page">
+    <div className="home-page mt-16">
       <section className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">
           <div className="max-w-md">

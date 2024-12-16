@@ -1,4 +1,5 @@
 import SolvedQuestion from '../models/SolvedQuestion.js'
+import DashboardProgress from '../models/DashboardProgress.js'
 import moment from 'moment'
 
 // Get progress metrics for a user
@@ -63,4 +64,76 @@ const getActivityData = async (req, res) => {
     }
 }
 
-export { getUserProgress, getActivityData }
+// Get progress for all lists
+const getListsProgress = async (req, res) => {
+    try {
+        let progress = await DashboardProgress.findOne({ user: req.user._id })
+            .populate('questionLists.list', 'title metadata')
+            
+        if (!progress) {
+            progress = new DashboardProgress({ user: req.user._id })
+            await progress.save()
+        }
+
+        res.json(progress.questionLists)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+// Update progress for a specific list
+const updateListProgress = async (req, res) => {
+    try {
+        const { listId, questionId } = req.body
+        let progress = await DashboardProgress.findOne({ user: req.user._id })
+        
+        if (!progress) {
+            progress = new DashboardProgress({ user: req.user._id })
+        }
+
+        await progress.updateListProgress(listId, questionId)
+        
+        // Add to recent activity
+        progress.recentActivity.unshift({
+            type: 'SOLVED',
+            questionId,
+            listId,
+            timestamp: new Date()
+        })
+
+        // Keep only last 20 activities
+        if (progress.recentActivity.length > 20) {
+            progress.recentActivity = progress.recentActivity.slice(0, 20)
+        }
+
+        await progress.save()
+        res.json(progress.questionLists.find(p => p.list.toString() === listId))
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+// Get recent activity for lists
+const getListsActivity = async (req, res) => {
+    try {
+        const progress = await DashboardProgress.findOne({ user: req.user._id })
+            .populate('recentActivity.questionId', 'title')
+            .populate('recentActivity.listId', 'title')
+            
+        if (!progress) {
+            return res.json([])
+        }
+
+        res.json(progress.recentActivity)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+export { 
+    getUserProgress, 
+    getActivityData, 
+    getListsProgress, 
+    updateListProgress, 
+    getListsActivity 
+}

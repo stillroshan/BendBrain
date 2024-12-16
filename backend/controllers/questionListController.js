@@ -1,127 +1,76 @@
 import QuestionList from '../models/QuestionList.js'
-import User from '../models/User.js'
-import SolvedQuestion from '../models/SolvedQuestion.js'
+import DashboardProgress from '../models/DashboardProgress.js'
+import Question from '../models/Question.js'
 
-// Get all question lists with advanced filtering and sorting
-const getQuestionLists = async (req, res) => {
+// Get all question lists with filtering, sorting, and pagination
+export const getQuestionLists = async (req, res) => {
     try {
         const { 
-            search,
-            creator,
-            tags,
-            isPublic,
-            isOfficial,
-            sort = 'recent',
+            category, 
+            difficulty, 
+            search, 
+            sortBy = 'popular', // popular, recent, solved
             page = 1,
             limit = 10
         } = req.query
 
-        // Build query
-        let query = {}
-        
-        // Search across multiple fields
+        let query = { visibility: 'Public' }
+        let sort = {}
+
+        // Build query filters
+        if (category) query.category = category
+        if (difficulty) query.difficulty = difficulty
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
                 { tags: { $in: [new RegExp(search, 'i')] } }
             ]
-            
-            // Add creator search if it's a username
-            const creator = await User.findOne({ 
-                username: { $regex: search, $options: 'i' } 
-            })
-            if (creator) {
-                query.$or.push({ creator: creator._id })
-            }
         }
 
-        // Filter by specific creator
-        if (creator) {
-            const creatorUser = await User.findOne({ username: creator })
-            if (creatorUser) {
-                query.creator = creatorUser._id
-            }
-        }
-
-        // Filter by tags
-        if (tags) {
-            const tagArray = tags.split(',').map(tag => tag.trim())
-            query.tags = { $in: tagArray }
-        }
-
-        // Filter by visibility
-        if (isPublic !== undefined) {
-            query.isPublic = isPublic === 'true'
-        }
-
-        if (isOfficial !== undefined) {
-            query.isOfficial = isOfficial === 'true'
-        }
-
-        // Handle private lists visibility
-        if (!req.user?.isAdmin) {
-            query = {
-                $or: [
-                    { isPublic: true },
-                    { creator: req.user?._id }
-                ]
-            }
-        }
-
-        // Build sort options
-        let sortOption = {}
-        switch (sort) {
-            case 'relevancy':
-                // Complex sorting based on multiple factors
-                sortOption = {
-                    isOfficial: -1,
-                    'likes.length': -1,
-                    totalQuestions: -1,
-                    createdAt: -1
-                }
+        // Handle sorting
+        switch (sortBy) {
+            case 'popular':
+                sort = { 'stats.saves': -1, 'stats.likes': -1 }
                 break
-            case 'likes':
-                sortOption = { 'likes.length': -1 }
+            case 'recent':
+                sort = { createdAt: -1 }
                 break
-            case 'questions':
-                sortOption = { totalQuestions: -1 }
+            case 'solved':
+                sort = { 'stats.completions': -1 }
                 break
-            default: // 'recent'
-                sortOption = { createdAt: -1 }
+            default:
+                sort = { 'stats.saves': -1 }
         }
 
-        // Pagination
-        const skip = (page - 1) * limit
+        // Add official lists at top
+        sort.isOfficial = -1
 
-        // Execute query with pagination
+        const total = await QuestionList.countDocuments(query)
         const lists = await QuestionList.find(query)
-            .sort(sortOption)
-            .skip(skip)
-            .limit(limit)
             .populate('creator', 'username profilePicture')
+            .sort(sort)
+            .skip((page - 1) * limit)
+            .limit(limit)
             .lean()
 
-        // Get total count for pagination
-        const total = await QuestionList.countDocuments(query)
-
-        // Add progress for authenticated users
+        // Add progress information for authenticated users
         if (req.user) {
-            const solvedQuestions = await SolvedQuestion.find({ 
-                userId: req.user._id,
-                status: 'Solved'
-            })
-
-            const solvedSet = new Set(solvedQuestions.map(sq => sq.questionNumber))
-
-            lists.forEach(list => {
-                const solved = list.questions.filter(qNum => solvedSet.has(qNum)).length
-                list.progress = {
-                    solved,
-                    total: list.questions.length,
-                    percentage: (solved / list.questions.length * 100).toFixed(1)
-                }
-            })
+            const progress = await DashboardProgress.findOne({ user: req.user._id })
+            if (progress) {
+                lists.forEach(list => {
+                    const listProgress = progress.questionLists.find(
+                        p => p.list.toString() === list._id.toString()
+                    )
+                    if (listProgress) {
+                        list.userProgress = {
+                            completionPercentage: listProgress.completionPercentage,
+                            solvedCount: listProgress.solvedQuestions.length,
+                            lastAttempted: listProgress.lastAttempted
+                        }
+                    }
+                })
+            }
         }
 
         res.json({
@@ -129,8 +78,8 @@ const getQuestionLists = async (req, res) => {
             pagination: {
                 total,
                 pages: Math.ceil(total / limit),
-                page: parseInt(page),
-                limit: parseInt(limit)
+                page: Number(page),
+                limit: Number(limit)
             }
         })
     } catch (error) {
@@ -138,66 +87,146 @@ const getQuestionLists = async (req, res) => {
     }
 }
 
-// Create new question list
-const createQuestionList = async (req, res) => {
+// Get user's created and saved lists
+export const getUserLists = async (req, res) => {
     try {
-        const { 
-            title, 
-            description, 
-            questions, 
-            isPublic, 
-            tags
-        } = req.body
+        const [createdLists, savedLists] = await Promise.all([
+            QuestionList.find({ creator: req.user._id })
+                .populate('creator', 'username profilePicture')
+                .sort({ createdAt: -1 })
+                .lean(),
+            QuestionList.find({ 'stats.saves': req.user._id })
+                .populate('creator', 'username profilePicture')
+                .sort({ createdAt: -1 })
+                .lean()
+        ])
 
-        const list = new QuestionList({
-            title,
-            description,
-            creator: req.user._id,
-            questions,
-            isPublic,
-            tags,
-            totalQuestions: questions.length,
-            isOfficial: req.user.isAdmin
-        })
+        // Add progress information
+        const progress = await DashboardProgress.findOne({ user: req.user._id })
+        if (progress) {
+            const addProgress = (list) => {
+                const listProgress = progress.questionLists.find(
+                    p => p.list.toString() === list._id.toString()
+                )
+                if (listProgress) {
+                    list.userProgress = {
+                        completionPercentage: listProgress.completionPercentage,
+                        solvedCount: listProgress.solvedQuestions.length,
+                        lastAttempted: listProgress.lastAttempted
+                    }
+                }
+                return list
+            }
 
-        const savedList = await list.save()
-        await savedList.populate('creator', 'username profilePicture')
+            createdLists.forEach(addProgress)
+            savedLists.forEach(addProgress)
+        }
 
-        res.status(201).json(savedList)
+        res.json({ createdLists, savedLists })
     } catch (error) {
-        res.status(400).json({ message: error.message })
+        res.status(500).json({ message: error.message })
     }
 }
 
-// Get question list by ID
-const getQuestionListById = async (req, res) => {
+// Toggle save list
+export const toggleSaveList = async (req, res) => {
+    try {
+        const list = await QuestionList.findById(req.params.id)
+        if (!list) {
+            return res.status(404).json({ message: 'List not found' })
+        }
+
+        const userSavedIndex = list.stats.saves.indexOf(req.user._id)
+        if (userSavedIndex === -1) {
+            list.stats.saves.push(req.user._id)
+        } else {
+            list.stats.saves.splice(userSavedIndex, 1)
+        }
+
+        await list.save()
+        res.json({ saved: userSavedIndex === -1 })
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+// Toggle like list
+export const toggleLikeList = async (req, res) => {
+    try {
+        const list = await QuestionList.findById(req.params.id)
+        if (!list) {
+            return res.status(404).json({ message: 'List not found' })
+        }
+
+        const userLikedIndex = list.stats.likes.indexOf(req.user._id)
+        if (userLikedIndex === -1) {
+            list.stats.likes.push(req.user._id)
+        } else {
+            list.stats.likes.splice(userLikedIndex, 1)
+        }
+
+        await list.save()
+        res.json({ liked: userLikedIndex === -1 })
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+// Get list details with questions and progress
+export const getQuestionListById = async (req, res) => {
     try {
         const list = await QuestionList.findById(req.params.id)
             .populate('creator', 'username profilePicture')
+            .populate({
+                path: 'questions.questionId',
+                select: 'title difficulty section type avgAccuracy avgTimeSpent'
+            })
             .lean()
 
         if (!list) {
             return res.status(404).json({ message: 'Question list not found' })
         }
 
-        // Check if user has access to private list
-        if (!list.isPublic && (!req.user || (list.creator._id.toString() !== req.user._id.toString() && !req.user.isAdmin))) {
+        // Check visibility permissions
+        if (list.visibility === 'Private' && 
+            (!req.user || (list.creator._id.toString() !== req.user._id.toString() && !req.user.isAdmin))) {
             return res.status(403).json({ message: 'Access denied' })
         }
 
-        // Add progress for authenticated users
+        // Add user-specific data for authenticated users
         if (req.user) {
-            const solvedQuestions = await SolvedQuestion.find({
+            // Get progress
+            const progress = await DashboardProgress.findOne({ user: req.user._id })
+            if (progress) {
+                const listProgress = progress.questionLists.find(
+                    p => p.list.toString() === list._id.toString()
+                )
+                if (listProgress) {
+                    list.userProgress = {
+                        completionPercentage: listProgress.completionPercentage,
+                        solvedQuestions: listProgress.solvedQuestions,
+                        lastAttempted: listProgress.lastAttempted
+                    }
+                }
+            }
+
+            // Add saved/liked status
+            list.userInteraction = {
+                saved: list.stats.saves.includes(req.user._id),
+                liked: list.stats.likes.includes(req.user._id)
+            }
+
+            // Add solved status to each question
+            const solvedQuestions = await Question.find({
                 userId: req.user._id,
-                questionNumber: { $in: list.questions },
+                questionId: { $in: list.questions.map(q => q.questionId._id) },
                 status: 'Solved'
             })
 
-            list.progress = {
-                solved: solvedQuestions.length,
-                total: list.questions.length,
-                percentage: (solvedQuestions.length / list.questions.length * 100).toFixed(1)
-            }
+            list.questions = list.questions.map(q => ({
+                ...q,
+                solved: solvedQuestions.some(sq => sq.questionId.equals(q.questionId._id))
+            }))
         }
 
         res.json(list)
@@ -206,94 +235,87 @@ const getQuestionListById = async (req, res) => {
     }
 }
 
+// Create new question list
+export const createQuestionList = async (req, res) => {
+    try {
+        const { 
+            title, 
+            description, 
+            questions, 
+            category, 
+            visibility, 
+            tags 
+        } = req.body
+
+        const list = new QuestionList({
+            title,
+            description,
+            creator: req.user._id,
+            questions: questions.map((q, index) => ({ 
+                questionId: q, 
+                order: index + 1 
+            })),
+            category,
+            visibility,
+            tags,
+            isOfficial: req.user.isAdmin
+        })
+
+        await list.save()
+        res.status(201).json(await list.populate('creator', 'username profilePicture'))
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
 // Update question list
-const updateQuestionList = async (req, res) => {
+export const updateQuestionList = async (req, res) => {
     try {
         const list = await QuestionList.findById(req.params.id)
-
         if (!list) {
-            return res.status(404).json({ message: 'Question list not found' })
+            return res.status(404).json({ message: 'List not found' })
         }
 
-        // Check ownership or admin status
+        // Check ownership
         if (list.creator.toString() !== req.user._id.toString() && !req.user.isAdmin) {
             return res.status(403).json({ message: 'Not authorized' })
         }
 
-        const {
-            title,
-            description,
-            questions,
-            isPublic,
-            tags
-        } = req.body
+        const updates = req.body
+        Object.keys(updates).forEach(key => {
+            if (key === 'questions') {
+                list.questions = updates.questions.map((q, index) => ({
+                    questionId: q,
+                    order: index + 1
+                }))
+            } else {
+                list[key] = updates[key]
+            }
+        })
 
-        list.title = title || list.title
-        list.description = description || list.description
-        list.questions = questions || list.questions
-        list.isPublic = isPublic !== undefined ? isPublic : list.isPublic
-        list.tags = tags || list.tags
-        list.totalQuestions = questions ? questions.length : list.totalQuestions
-
-        const updatedList = await list.save()
-        await updatedList.populate('creator', 'username profilePicture')
-
-        res.json(updatedList)
+        await list.save()
+        res.json(await list.populate('creator', 'username profilePicture'))
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
 }
 
 // Delete question list
-const deleteQuestionList = async (req, res) => {
+export const deleteQuestionList = async (req, res) => {
     try {
         const list = await QuestionList.findById(req.params.id)
-
         if (!list) {
-            return res.status(404).json({ message: 'Question list not found' })
+            return res.status(404).json({ message: 'List not found' })
         }
 
-        // Check ownership or admin status
+        // Check ownership
         if (list.creator.toString() !== req.user._id.toString() && !req.user.isAdmin) {
             return res.status(403).json({ message: 'Not authorized' })
         }
 
         await list.remove()
-        res.json({ message: 'Question list removed' })
+        res.json({ message: 'List deleted successfully' })
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
-}
-
-// Toggle like on question list
-const toggleLike = async (req, res) => {
-    try {
-        const list = await QuestionList.findById(req.params.id)
-
-        if (!list) {
-            return res.status(404).json({ message: 'Question list not found' })
-        }
-
-        const likeIndex = list.likes.indexOf(req.user._id)
-
-        if (likeIndex === -1) {
-            list.likes.push(req.user._id)
-        } else {
-            list.likes.splice(likeIndex, 1)
-        }
-
-        await list.save()
-        res.json({ likes: list.likes.length })
-    } catch (error) {
-        res.status(400).json({ message: error.message })
-    }
-}
-
-export {
-    getQuestionLists,
-    createQuestionList,
-    getQuestionListById,
-    updateQuestionList,
-    deleteQuestionList,
-    toggleLike
 }

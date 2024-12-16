@@ -104,7 +104,7 @@ const ActivityCalendar = ({ userId }) => {
     }
 
     return (
-        <div className="card bg-base-100 shadow-lg p-6 pl-12 pr-12">
+        <div className="card bg-base-100 shadow-lg p-6 pl-8 pr-8">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     <button 

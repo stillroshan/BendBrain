@@ -1,4 +1,6 @@
-import { Routes, Route} from 'react-router-dom' 
+import { Routes, Route, useLocation } from 'react-router-dom'
+import DetailedFooter from './components/DetailedFooter'
+import SimpleFooter from './components/SimpleFooter'
 
 import Navbar from './components/Navbar'
 
@@ -14,6 +16,7 @@ import Question from './pages/Question'
 import QuestionLists from './pages/QuestionLists'
 import QuestionListDetail from './pages/QuestionListDetail'
 import CreateEditList from './pages/CreateEditList'
+import UserLists from './pages/UserLists'
 
 import Compete from './pages/Compete' 
 
@@ -36,41 +39,49 @@ import ResetPassword from './pages/ResetPassword'
 
 
 function App() {
+    const location = useLocation()
+    const isHomePage = location.pathname === '/'
+
     return (
-        <>
+        <div className="flex flex-col min-h-screen">
             <Navbar />
-            <Routes>
-                <Route path="/" element={<Home />} />
+            <main className="flex-grow">
+                <Routes>
+                    <Route path="/" element={<Home />} />
 
-                <Route path="/learn" element={<Learn />} />
-                <Route path="/learn/:courseId" element={<CourseDetail />} />
-                <Route path="/learn/:courseId/:subjectId" element={<SubjectDetail />} />
-                <Route path="/learn/:courseId/:subjectId/:topicId" element={<TopicContent />} />
+                    <Route path="/learn" element={<Learn />} />
+                    <Route path="/learn/:courseId" element={<CourseDetail />} />
+                    <Route path="/learn/:courseId/:subjectId" element={<SubjectDetail />} />
+                    <Route path="/learn/:courseId/:subjectId/:topicId" element={<TopicContent />} />
 
-                <Route path="/practice" element={<Practice />} />
-                <Route path="/question/:questionNumber" element={<Question />} />
-                <Route path="/lists" element={<QuestionLists />} />
-                <Route path="/lists/:id" element={<QuestionListDetail />} />
-                <Route path="/lists/new" element={<CreateEditList />} />
+                    <Route path="/practice" element={<Practice />} />
+                    <Route path="/question/:questionNumber" element={<Question />} />
+                    <Route path="/lists" element={<QuestionLists />} />
+                    <Route path="/lists/create" element={<CreateEditList />} />
+                    <Route path="/lists/:id/edit" element={<CreateEditList />} />
+                    <Route path="/lists/:id" element={<QuestionListDetail />} />
+                    <Route path="/lists/user" element={<UserLists />} />
 
-                <Route path="/compete" element={<Compete />} />
+                    <Route path="/compete" element={<Compete />} />
 
-                <Route path="/discuss" element={<Discuss />} />
-                <Route path="/discuss/new" element={<NewDiscussion />} />
-                <Route path="/discuss/:id" element={<DiscussionDetail />} />
+                    <Route path="/discuss" element={<Discuss />} />
+                    <Route path="/discuss/new" element={<NewDiscussion />} />
+                    <Route path="/discuss/:id" element={<DiscussionDetail />} />
 
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/question/:questionNumber" element={<EditQuestion />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin/question/:questionNumber" element={<EditQuestion />} />
 
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
-                <Route path="/forgotpassword" element={<ForgotPassword />} />
-                <Route path="/resetpassword/:token" element={<ResetPassword />} />
-            </Routes>
-        </>
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+                    <Route path="/forgotpassword" element={<ForgotPassword />} />
+                    <Route path="/resetpassword/:token" element={<ResetPassword />} />
+                </Routes>
+            </main>
+            {isHomePage ? <DetailedFooter /> : <SimpleFooter />}
+        </div>
     ) 
 }
 

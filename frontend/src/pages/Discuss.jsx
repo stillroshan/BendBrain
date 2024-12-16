@@ -1,39 +1,55 @@
-import { useState, useEffect, useContext, useCallback } from 'react'
+import { useState, useEffect, useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import { Link } from 'react-router-dom'
 import axios from 'axios'
 import moment from 'moment'
 import { 
-    ChatBubbleLeftIcon, 
-    PlusIcon,
-    HeartIcon,
+    PlusIcon, 
+    HeartIcon, 
     HandThumbDownIcon,
+    ChatBubbleLeftIcon,
+    MapPinIcon,
     EyeIcon,
-    MapPinIcon
+    FunnelIcon
 } from '@heroicons/react/24/outline'
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
+import { HandThumbDownIcon as HandThumbDownIconSolid } from '@heroicons/react/24/solid'
 
 const Discuss = () => {
+    const navigate = useNavigate()
     const { user } = useContext(AuthContext)
     const [discussions, setDiscussions] = useState([])
-    const [category, setCategory] = useState('General')
-    const [sortBy, setSortBy] = useState('latest')
+    const [loading, setLoading] = useState(true)
+    const [filter, setFilter] = useState('all')
+    const [category, setCategory] = useState('')
 
-    const fetchDiscussions = useCallback(async () => {
-        try {
-            const response = await axios.get(`/api/discussions?category=${category}&sort=${sortBy}`)
-            setDiscussions(response.data)
-        } catch (error) {
-            console.error('Error fetching discussions:', error)
-        }
-    }, [category, sortBy])
+    const categories = [
+        'General', 'Questions', 'Question Number', 'Tips', 
+        'Exams', 'Jobs', 'Interview', 'News', 'Feedback', 'Other'
+    ]
 
     useEffect(() => {
         fetchDiscussions()
-    }, [fetchDiscussions])
+    }, [filter, category])
+
+    const fetchDiscussions = async () => {
+        try {
+            const params = {}
+            if (filter !== 'all') params.filter = filter
+            if (category) params.category = category
+
+            const response = await axios.get('/api/discussions', { params })
+            setDiscussions(response.data)
+        } catch (error) {
+            console.error('Error fetching discussions:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const handleLike = async (discussionId) => {
-        const token = localStorage.getItem('authToken')
         try {
+            const token = localStorage.getItem('authToken')
             await axios.post(`/api/discussions/${discussionId}/like`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             })
@@ -44,8 +60,8 @@ const Discuss = () => {
     }
 
     const handleDislike = async (discussionId) => {
-        const token = localStorage.getItem('authToken')
         try {
+            const token = localStorage.getItem('authToken')
             await axios.post(`/api/discussions/${discussionId}/dislike`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             })
@@ -55,108 +71,145 @@ const Discuss = () => {
         }
     }
 
-    const incrementViewCount = async (discussionId) => {
-        try {
-            await axios.post(`/api/discussions/view/${discussionId}`)
-        } catch (error) {
-            console.error('Error incrementing view count:', error)
-        }
-    }
-
     return (
-        <div className="container mx-auto px-4 py-8 mt-16">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Community Discussions</h1>
+        <div className="container mx-auto px-4 py-8 max-w-5xl mt-16">
+            {/* Header Section */}
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">Discussions</h1>
+                    <p className="text-base-content/70">
+                        Join the conversation with fellow learners
+                    </p>
+                </div>
                 {user && (
-                    <Link to="/discuss/new" className="btn btn-primary">
-                        <PlusIcon className="w-5 h-5 mr-2" />
+                    <Link to="/discuss/new" className="btn btn-primary gap-2">
+                        <PlusIcon className="w-5 h-5" />
                         New Discussion
                     </Link>
                 )}
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-4 mb-6">
-                <select 
-                    className="select select-bordered w-full max-w-xs"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                >
-                    <option value="General">General</option>
-                    <option value="Questions">Questions</option>
-                    <option value="Tips">Tips</option>
-                    <option value="Exams">Exams</option>
-                    <option value="Jobs">Jobs</option>
-                    <option value="Interview">Interview</option>
-                    <option value="News">News</option>
-                    <option value="Feedback">Feedback</option>
-                    <option value="Other">Other</option>
-                </select>
-
-                <select 
-                    className="select select-bordered w-full max-w-xs"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                >
-                    <option value="latest">Latest</option>
-                    <option value="popular">Most Popular</option>
-                    <option value="views">Most Viewed</option>
-                </select>
+            {/* Filters Section */}
+            <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center gap-4 bg-base-200 p-2 rounded-lg flex-1">
+                    <FunnelIcon className="w-5 h-5" />
+                    <select 
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="select select-ghost"
+                    >
+                        <option value="all">All Discussions</option>
+                        <option value="trending">Trending</option>
+                        <option value="recent">Recent</option>
+                        <option value="most-liked">Most Liked</option>
+                    </select>
+                </div>
+                <div className="flex items-center gap-4 bg-base-200 p-2 rounded-lg flex-1">
+                    <ChatBubbleLeftIcon className="w-5 h-5" />
+                    <select 
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="select select-ghost"
+                    >
+                        <option value="">All Categories</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Discussions List */}
-            <div className="space-y-4">
-                {discussions.map((discussion) => (
-                    <div key={discussion._id} className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <div className="flex items-start gap-4">
-                                <img 
-                                    src={discussion.userId.profilePicture || '/default-avatar.png'} 
-                                    alt="Profile" 
-                                    className="w-12 h-12 rounded-full"
-                                />
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        {discussion.isPinned && (
-                                            <MapPinIcon className="w-5 h-5 text-primary" />
-                                        )}
-                                        <Link 
-                                            to={`/discuss/${discussion._id}`}
-                                            className="text-xl font-bold hover:text-primary"
-                                            onClick={() => incrementViewCount(discussion._id)}
-                                        >
-                                            {discussion.title}
+            {loading ? (
+                <div className="flex justify-center items-center py-12">
+                    <span className="loading loading-spinner loading-lg"></span>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {discussions.map((discussion) => (
+                        <div key={discussion._id} 
+                            className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300"
+                        >
+                            <div className="card-body">
+                                <div className="flex items-start gap-4">
+                                    <img 
+                                        src={discussion.userId.profilePicture || '/default-avatar.png'} 
+                                        alt="Profile" 
+                                        className="w-12 h-12 rounded-full object-cover"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {discussion.isPinned && (
+                                                <div className="badge badge-primary gap-1">
+                                                    <MapPinIcon className="w-4 h-4" />
+                                                    Pinned
+                                                </div>
+                                            )}
+                                            <div className="badge badge-ghost">{discussion.category}</div>
+                                        </div>
+                                        
+                                        <Link to={`/discuss/${discussion._id}`}>
+                                            <h2 className="text-xl font-bold hover:text-primary transition-colors">
+                                                {discussion.title}
+                                            </h2>
                                         </Link>
-                                    </div>
-                                    <p className="text-sm text-base-content/70">
-                                        Posted by {discussion.userId.username} • {moment(discussion.createdAt).fromNow()}
-                                    </p>
-                                    <p className="mt-2">{discussion.content.substring(0, 200)}...</p>
-                                    
-                                    <div className="flex items-center gap-6 mt-4">
-                                        <div className="flex items-center gap-2">
-                                            <ChatBubbleLeftIcon className="w-5 h-5" />
-                                            <span>{discussion.replies.length}</span>
+                                        
+                                        <p className="text-sm text-base-content/70 mt-1">
+                                            Posted by {discussion.userId.username} • {moment(discussion.createdAt).fromNow()}
+                                        </p>
+                                        
+                                        <p className="mt-3 line-clamp-2">{discussion.content}</p>
+
+                                        <div className="flex items-center gap-6 mt-4">
+                                            <button 
+                                                className="btn btn-ghost btn-sm gap-2"
+                                                onClick={() => handleLike(discussion._id)}
+                                            >
+                                                {discussion.likes.includes(user?._id) ? (
+                                                    <HeartIconSolid className="w-5 h-5 text-primary" />
+                                                ) : (
+                                                    <HeartIcon className="w-5 h-5" />
+                                                )}
+                                                <span>{discussion.likes.length}</span>
+                                            </button>
+                                            <button 
+                                                className="btn btn-ghost btn-sm gap-2"
+                                                onClick={() => handleDislike(discussion._id)}
+                                            >
+                                                {discussion.dislikes.includes(user?._id) ? (
+                                                    <HandThumbDownIconSolid className="w-5 h-5 text-primary" />
+                                                ) : (
+                                                    <HandThumbDownIcon className="w-5 h-5" />
+                                                )}
+                                                <span>{discussion.dislikes.length}</span>
+                                            </button>
+                                            <div className="flex items-center gap-2 text-base-content/70">
+                                                <ChatBubbleLeftIcon className="w-5 h-5" />
+                                                <span>{discussion.replies?.length || 0} replies</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-base-content/70">
+                                                <EyeIcon className="w-5 h-5" />
+                                                <span>{discussion.views} views</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleLike(discussion._id)}>
-                                            <HeartIcon className="w-5 h-5" />
-                                            <span>{discussion.likes.length}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleDislike(discussion._id)}>
-                                            <HandThumbDownIcon className="w-5 h-5" />
-                                            <span>{discussion.dislikes.length}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <EyeIcon className="w-5 h-5" />
-                                            <span>{discussion.views}</span>
-                                        </div>
+
+                                        {/* Tags */}
+                                        {discussion.tags && discussion.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-4">
+                                                {discussion.tags.map(tag => (
+                                                    <span key={tag} className="badge badge-ghost">
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

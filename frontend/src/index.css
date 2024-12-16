@@ -16,6 +16,8 @@
     height: 48px;
 }
 
-main {
-    margin-top: 48px;
+#root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }

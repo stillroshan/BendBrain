@@ -1,224 +1,227 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
-import { 
-    PlusIcon, 
+import {
     MagnifyingGlassIcon,
-    AdjustmentsHorizontalIcon,
-    BookmarkIcon,
-    ShareIcon,
-    UserGroupIcon
+    PlusIcon
 } from '@heroicons/react/24/outline'
+import ListCard from '../components/lists/ListCard'
+import { AuthContext } from '../context/AuthContext'
 
 const QuestionLists = () => {
-    const { user } = useContext(AuthContext)
+    const { user, token } = useContext(AuthContext)
     const [lists, setLists] = useState([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
     const [filters, setFilters] = useState({
         search: '',
-        creator: '',
-        tags: '',
-        isPublic: '',
-        isOfficial: '',
-        sort: 'recent'
+        category: '',
+        difficulty: '',
+        sortBy: 'popular'
     })
-    const [page, setPage] = useState(1)
     const [pagination, setPagination] = useState({
-        total: 0,
-        pages: 1,
         page: 1,
-        limit: 10
+        limit: 10,
+        total: 0
     })
-    const [searchTimeout, setSearchTimeout] = useState(null)
+
+    const fetchLists = useCallback(async () => {
+        try {
+            setLoading(true)
+            const params = {
+                ...filters,
+                page: pagination.page,
+                limit: pagination.limit
+            }
+            
+            const { data } = await axios.get('/api/lists', { 
+                params,
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setLists(data.lists)
+            setPagination(prev => ({
+                ...prev,
+                total: data.pagination.total
+            }))
+        } catch (error) {
+            console.error('Error fetching lists:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [filters, pagination.page, pagination.limit, token])
 
     useEffect(() => {
-        const fetchLists = async () => {
-            setLoading(true)
-            setError(null)
-            try {
-                const response = await axios.get('/api/lists', {
-                    params: {
-                        ...filters,
-                        page
-                    }
-                })
-                setLists(response.data.lists)
-                setPagination(response.data.pagination)
-            } catch (error) {
-                console.error('Error fetching lists:', error)
-                setError('Failed to load question lists. Please try again later.')
-            } finally {
-                setLoading(false)
-            }
-        }
         fetchLists()
-    }, [filters, page])
+    }, [fetchLists])
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target
+        setFilters(prev => ({
+            ...prev,
+            [name]: value
+        }))
+        setPagination(prev => ({ ...prev, page: 1 })) // Reset to first page
+    }
+
+    const handlePageChange = (newPage) => {
+        setPagination(prev => ({ ...prev, page: newPage }))
+    }
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <span className="loading loading-spinner loading-lg"></span>
+            </div>
+        )
+    }
 
     return (
         <div className="container mx-auto px-4 py-8 mt-16">
-            {/* Header Section */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Question Lists</h1>
-                {user && (
-                    <Link to="/lists/new" className="btn btn-primary">
-                        <PlusIcon className="w-5 h-5 mr-2" />
-                        Create List
-                    </Link>
-                )}
+            {/* Hero Section */}
+            <div className="hero bg-base-200 rounded-box p-8 mb-8">
+                <div className="hero-content text-center">
+                    <div className="max-w-2xl">
+                        <h1 className="text-4xl font-bold mb-4">Question Lists</h1>
+                        <p className="text-lg text-base-content/70 mb-6">
+                            Discover curated question lists to enhance your practice. Create your own lists or explore official ones.
+                        </p>
+                        {user && (
+                            <Link to="/lists/create" className="btn btn-primary btn-lg">
+                                <PlusIcon className="w-5 h-5 mr-2" />
+                                Create New List
+                            </Link>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Filters Section */}
-            <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex-1 min-w-[300px]">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Search lists..."
-                            className="input input-bordered w-full pl-10"
-                            value={filters.search}
-                            onChange={(e) => {
-                                const value = e.target.value
-                                setFilters(prev => ({ ...prev, search: value }))
-                                
-                                // Clear existing timeout
-                                if (searchTimeout) clearTimeout(searchTimeout)
-                                
-                                // Set new timeout
-                                const timeoutId = setTimeout(() => {
-                                    setPage(1) // Reset to first page when searching
-                                }, 500)
-                                
-                                setSearchTimeout(timeoutId)
-                            }}
-                        />
-                        <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+            <div className="bg-base-100 rounded-box shadow-lg p-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="form-control">
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            fetchLists();
+                        }} className="input-group">
+                            <input
+                                type="text"
+                                placeholder="Search lists..."
+                                className="input input-bordered w-full"
+                                name="search"
+                                value={filters.search}
+                                onChange={handleFilterChange}
+                            />
+                            <button type="submit" className="btn btn-primary">
+                                <MagnifyingGlassIcon className="w-5 h-5" />
+                                Search
+                            </button>
+                        </form>
                     </div>
+
+                    <select
+                        className="select select-bordered w-full"
+                        name="category"
+                        value={filters.category}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">All Categories</option>
+                        <option value="Interview Prep">Interview Prep</option>
+                        <option value="Topic Wise">Topic Wise</option>
+                        <option value="Company Specific">Company Specific</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+
+                    <select
+                        className="select select-bordered w-full"
+                        name="difficulty"
+                        value={filters.difficulty}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">All Difficulties</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                        <option value="Mixed">Mixed</option>
+                    </select>
+
+                    <select
+                        className="select select-bordered w-full"
+                        name="sortBy"
+                        value={filters.sortBy}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="popular">Most Popular</option>
+                        <option value="recent">Most Recent</option>
+                        <option value="solved">Most Solved</option>
+                    </select>
                 </div>
-
-                <select 
-                    className="select select-bordered"
-                    value={filters.sort}
-                    onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
-                >
-                    <option value="recent">Most Recent</option>
-                    <option value="relevancy">Most Relevant</option>
-                    <option value="likes">Most Liked</option>
-                    <option value="questions">Most Questions</option>
-                </select>
-
-                <button className="btn btn-outline gap-2">
-                    <AdjustmentsHorizontalIcon className="w-5 h-5" />
-                    Filters
-                </button>
             </div>
 
-            {/* Loading State */}
-            {loading && (
-                <div className="flex justify-center items-center py-8">
-                    <span className="loading loading-spinner loading-lg"></span>
-                </div>
-            )}
+            {/* Lists Grid with Animation */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {lists.map((list, index) => (
+                    <div
+                        key={list._id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                        <ListCard 
+                            list={list}
+                            onSave={fetchLists}
+                        />
+                    </div>
+                ))}
+            </div>
 
-            {/* Error State */}
-            {error && (
-                <div className="alert alert-error">
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {/* Lists Grid */}
-            {!loading && !error && lists.length === 0 && (
-                <div className="text-center py-8">
-                    <p className="text-lg text-gray-600">No question lists found.</p>
-                </div>
-            )}
-
-            {!loading && !error && lists.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {lists.map(list => (
-                        <div key={list._id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                            <div className="card-body">
-                                <div className="flex justify-between items-start">
-                                    <h2 className="card-title">{list.title}</h2>
-                                    {list.isOfficial && (
-                                        <div className="badge badge-primary">Official</div>
-                                    )}
-                                </div>
-                                
-                                <p className="text-base-content/70 line-clamp-2">{list.description}</p>
-                                
-                                <div className="flex items-center gap-2 mt-2">
-                                    <img 
-                                        src={list.creator.profilePicture || '/default-avatar.png'} 
-                                        alt={list.creator.username}
-                                        className="w-6 h-6 rounded-full"
-                                    />
-                                    <span className="text-sm">{list.creator.username}</span>
-                                </div>
-
-                                {/* Tags */}
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    {list.tags.map(tag => (
-                                        <span key={tag} className="badge badge-ghost">{tag}</span>
-                                    ))}
-                                </div>
-
-                                {/* Progress Bar (if user has started the list) */}
-                                {list.progress && (
-                                    <div className="mt-4">
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span>{list.progress.solved}/{list.progress.total} solved</span>
-                                            <span>{list.progress.percentage}%</span>
-                                        </div>
-                                        <progress 
-                                            className="progress progress-primary w-full" 
-                                            value={list.progress.percentage} 
-                                            max="100"
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Action Buttons */}
-                                <div className="card-actions justify-between items-center mt-4">
-                                    <div className="flex gap-2">
-                                        <button className="btn btn-ghost btn-sm">
-                                            <BookmarkIcon className="w-5 h-5" />
-                                        </button>
-                                        <button className="btn btn-ghost btn-sm">
-                                            <ShareIcon className="w-5 h-5" />
-                                        </button>
-                                        <div className="flex items-center gap-1">
-                                            <UserGroupIcon className="w-5 h-5" />
-                                            <span className="text-sm">{list.likes?.length || 0}</span>
-                                        </div>
-                                    </div>
-                                    <Link 
-                                        to={`/lists/${list._id}`} 
-                                        className="btn btn-primary btn-sm"
-                                    >
-                                        View List
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Pagination */}
-            <div className="flex justify-center mt-8">
+            {/* Enhanced Pagination */}
+            <div className="flex justify-center mt-12">
                 <div className="join">
-                    {Array.from({ length: pagination.pages }, (_, i) => (
-                        <button
-                            key={i + 1}
-                            className={`join-item btn ${pagination.page === i + 1 ? 'btn-active' : ''}`}
-                            onClick={() => setPage(i + 1)}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
+                    <button
+                        className="join-item btn"
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page === 1}
+                    >
+                        «
+                    </button>
+                    {Array.from({ length: Math.ceil(pagination.total / pagination.limit) }).map((_, idx) => {
+                        const pageNum = idx + 1;
+                        // Show only 5 pages around current page
+                        if (
+                            pageNum === 1 ||
+                            pageNum === Math.ceil(pagination.total / pagination.limit) ||
+                            (pageNum >= pagination.page - 2 && pageNum <= pagination.page + 2)
+                        ) {
+                            return (
+                                <button
+                                    key={pageNum}
+                                    className={`join-item btn ${pageNum === pagination.page ? 'btn-active' : ''}`}
+                                    onClick={() => handlePageChange(pageNum)}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        }
+                        // Add ellipsis for skipped pages
+                        if (
+                            pageNum === pagination.page - 3 ||
+                            pageNum === pagination.page + 3
+                        ) {
+                            return (
+                                <button key={pageNum} className="join-item btn btn-disabled">
+                                    ...
+                                </button>
+                            );
+                        }
+                        return null;
+                    })}
+                    <button
+                        className="join-item btn"
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page === Math.ceil(pagination.total / pagination.limit)}
+                    >
+                        »
+                    </button>
                 </div>
             </div>
         </div>

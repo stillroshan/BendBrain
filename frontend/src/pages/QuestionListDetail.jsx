@@ -1,150 +1,212 @@
-import { useState, useEffect, useContext } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useContext, useCallback } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
 import {
-    UserIcon,
-    CalendarIcon,
+    UserCircleIcon,
+    HeartIcon,
     BookmarkIcon,
-    ShareIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    ChartBarIcon
+    PencilIcon,
+    CheckCircleIcon,
+    MinusCircleIcon,
+    TagIcon
 } from '@heroicons/react/24/outline'
+import {
+    HeartIcon as HeartIconSolid,
+    BookmarkIcon as BookmarkIconSolid
+} from '@heroicons/react/24/solid'
+import { AuthContext } from '../context/AuthContext'
 
 const QuestionListDetail = () => {
     const { id } = useParams()
-    const { user } = useContext(AuthContext)
-    const navigate = useNavigate()
+    const { user, token } = useContext(AuthContext)
     const [list, setList] = useState(null)
-    const [questions, setQuestions] = useState([])
     const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
+    const [liking, setLiking] = useState(false)
+
+    const fetchList = useCallback(async () => {
+        try {
+            setLoading(true)
+            const { data } = await axios.get(`/api/lists/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setList(data)
+        } catch (error) {
+            console.error('Error fetching list:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [id, token])
 
     useEffect(() => {
-        const fetchListDetails = async () => {
-            try {
-                const response = await axios.get(`/api/lists/${id}`)
-                setList(response.data)
-                
-                // Fetch questions details
-                const questionDetails = await Promise.all(
-                    response.data.questions.map(qNum => 
-                        axios.get(`/api/questions/${qNum}`).then(res => res.data)
-                    )
-                )
-                setQuestions(questionDetails)
-            } catch (error) {
-                console.error('Error fetching list details:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchListDetails()
-    }, [id])
+        fetchList()
+    }, [fetchList])
 
-    const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this list?')) {
-            try {
-                await axios.delete(`/api/lists/${id}`)
-                navigate('/lists')
-            } catch (error) {
-                console.error('Error deleting list:', error)
-            }
+    const handleSave = async () => {
+        if (!user) return
+        try {
+            setSaving(true)
+            await axios.post(`/api/lists/${id}/save`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            fetchList()
+        } catch (error) {
+            console.error('Error saving list:', error)
+        } finally {
+            setSaving(false)
         }
     }
 
     const handleLike = async () => {
+        if (!user) return
         try {
-            const response = await axios.post(`/api/lists/${id}/like`)
-            setList(prev => ({
-                ...prev,
-                likes: response.data.likes
-            }))
+            setLiking(true)
+            await axios.post(`/api/lists/${id}/like`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            fetchList()
         } catch (error) {
-            console.error('Error toggling like:', error)
+            console.error('Error liking list:', error)
+        } finally {
+            setLiking(false)
         }
     }
 
     if (loading) {
-        return <div className="flex justify-center items-center min-h-screen">
-            <span className="loading loading-spinner loading-lg"></span>
-        </div>
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <span className="loading loading-spinner loading-lg"></span>
+            </div>
+        )
     }
 
-    if (!list) return null
+    if (!list) return <div>List not found</div>
 
     return (
         <div className="container mx-auto px-4 py-8 mt-16">
             {/* Header Section */}
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex justify-between items-start mb-6">
                 <div>
-                    <h1 className="text-4xl font-bold mb-2">{list.title}</h1>
-                    <p className="text-base-content/70 mb-4">{list.description}</p>
-                    
-                    <div className="flex flex-wrap gap-4 items-center text-sm">
+                    <h1 className="text-3xl font-bold mb-2">{list.title}</h1>
+                    <div className="flex items-center gap-4 text-base-content/70">
                         <div className="flex items-center gap-2">
-                            <UserIcon className="w-4 h-4" />
+                            <UserCircleIcon className="w-5 h-5" />
                             <span>{list.creator.username}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon className="w-4 h-4" />
-                            <span>{new Date(list.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {list.tags.map(tag => (
-                                <span key={tag} className="badge badge-ghost">{tag}</span>
-                            ))}
-                        </div>
+                        {list.isOfficial && (
+                            <div className="badge badge-primary">Official</div>
+                        )}
                     </div>
                 </div>
 
+                {/* Actions */}
                 <div className="flex gap-2">
-                    {user && (user._id === list.creator._id || user.isAdmin) && (
+                    {user && list.creator._id === user._id && (
+                        <Link 
+                            to={`/lists/${id}/edit`}
+                            className="btn btn-outline"
+                        >
+                            <PencilIcon className="w-5 h-5" />
+                            Edit
+                        </Link>
+                    )}
+                    {user && (
                         <>
-                            <Link to={`/lists/${id}/edit`} className="btn btn-ghost btn-sm">
-                                <PencilSquareIcon className="w-5 h-5" />
-                            </Link>
-                            <button onClick={handleDelete} className="btn btn-ghost btn-sm text-error">
-                                <TrashIcon className="w-5 h-5" />
+                            <button 
+                                className={`btn btn-outline ${liking ? 'loading' : ''}`}
+                                onClick={handleLike}
+                                disabled={liking}
+                            >
+                                {list.userInteraction?.liked ? (
+                                    <HeartIconSolid className="w-5 h-5 text-error" />
+                                ) : (
+                                    <HeartIcon className="w-5 h-5" />
+                                )}
+                                {list.stats.likes.length}
+                            </button>
+                            <button 
+                                className={`btn btn-outline ${saving ? 'loading' : ''}`}
+                                onClick={handleSave}
+                                disabled={saving}
+                            >
+                                {list.userInteraction?.saved ? (
+                                    <BookmarkIconSolid className="w-5 h-5 text-primary" />
+                                ) : (
+                                    <BookmarkIcon className="w-5 h-5" />
+                                )}
+                                {list.stats.saves.length}
                             </button>
                         </>
                     )}
-                    <button onClick={handleLike} className="btn btn-ghost btn-sm">
-                        <BookmarkIcon className="w-5 h-5" />
-                    </button>
-                    <button className="btn btn-ghost btn-sm">
-                        <ShareIcon className="w-5 h-5" />
-                    </button>
                 </div>
             </div>
 
-            {/* Progress Section */}
-            {list.progress && (
-                <div className="card bg-base-200 mb-8">
-                    <div className="card-body">
-                        <div className="flex items-center gap-4 mb-4">
-                            <ChartBarIcon className="w-6 h-6" />
-                            <h2 className="text-xl font-bold">Your Progress</h2>
+            {/* Description and Metadata */}
+            <div className="card bg-base-100 shadow-xl mb-8">
+                <div className="card-body">
+                    <p className="text-base-content/70 mb-4">{list.description}</p>
+                    
+                    <div className="flex flex-wrap gap-4">
+                        <div className="badge badge-outline">{list.difficulty}</div>
+                        <div className="badge badge-outline">{list.category}</div>
+                        {list.tags.map(tag => (
+                            <div key={tag} className="badge badge-outline">
+                                <TagIcon className="w-4 h-4 mr-1" />
+                                {tag}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="stats stats-horizontal shadow mt-4">
+                        <div className="stat">
+                            <div className="stat-title">Questions</div>
+                            <div className="stat-value">{list.metadata.totalQuestions}</div>
                         </div>
-                        
-                        <div className="stats shadow">
-                            <div className="stat">
-                                <div className="stat-title">Completion</div>
-                                <div className="stat-value">{list.progress.percentage}%</div>
-                                <div className="stat-desc">
-                                    {list.progress.solved} / {list.progress.total} questions
-                                </div>
+                        <div className="stat">
+                            <div className="stat-title">Easy</div>
+                            <div className="stat-value text-success">
+                                {list.metadata.difficultyDistribution.easy}
                             </div>
                         </div>
-
-                        <progress 
-                            className="progress progress-primary w-full mt-4" 
-                            value={list.progress.percentage} 
-                            max="100"
-                        />
+                        <div className="stat">
+                            <div className="stat-title">Medium</div>
+                            <div className="stat-value text-warning">
+                                {list.metadata.difficultyDistribution.medium}
+                            </div>
+                        </div>
+                        <div className="stat">
+                            <div className="stat-title">Hard</div>
+                            <div className="stat-value text-error">
+                                {list.metadata.difficultyDistribution.hard}
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Progress */}
+                    {list.userProgress && (
+                        <div className="mt-4">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span>Your Progress</span>
+                                <span>
+                                    {list.userProgress.solvedQuestions.length} / {list.metadata.totalQuestions} questions
+                                </span>
+                            </div>
+                            <progress 
+                                className="progress progress-primary w-full" 
+                                value={list.userProgress.completionPercentage} 
+                                max="100"
+                            />
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* Questions Table */}
             <div className="overflow-x-auto">
@@ -152,40 +214,41 @@ const QuestionListDetail = () => {
                     <thead>
                         <tr>
                             <th>Status</th>
-                            <th>Number</th>
                             <th>Title</th>
                             <th>Difficulty</th>
                             <th>Section</th>
-                            <th>Type</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {questions.map((question) => (
-                            <tr 
-                                key={question._id}
-                                className="hover cursor-pointer"
-                                onClick={() => navigate(`/question/${question.questionNumber}`)}
-                            >
+                        {list.questions.map((question) => (
+                            <tr key={question.questionId._id}>
                                 <td>
-                                    <div className={`w-3 h-3 rounded-full ${
-                                        question.status === 'Solved' ? 'bg-success' :
-                                        question.status === 'Attempted' ? 'bg-warning' :
-                                        'bg-base-300'
-                                    }`} />
+                                    {question.solved ? (
+                                        <CheckCircleIcon className="w-6 h-6 text-success" />
+                                    ) : (
+                                        <MinusCircleIcon className="w-6 h-6 text-base-content/30" />
+                                    )}
                                 </td>
-                                <td>{question.questionNumber}</td>
-                                <td>{question.title}</td>
+                                <td>{question.questionId.title}</td>
                                 <td>
-                                    <span className={`badge ${
-                                        question.difficulty === 'Hard' ? 'badge-error' :
-                                        question.difficulty === 'Medium' ? 'badge-warning' :
-                                        'badge-success'
+                                    <div className={`badge ${
+                                        question.questionId.difficulty === 'Easy' ? 'badge-success' :
+                                        question.questionId.difficulty === 'Medium' ? 'badge-warning' :
+                                        'badge-error'
                                     }`}>
-                                        {question.difficulty}
-                                    </span>
+                                        {question.questionId.difficulty}
+                                    </div>
                                 </td>
-                                <td>{question.section}</td>
-                                <td>{question.type}</td>
+                                <td>{question.questionId.section}</td>
+                                <td>
+                                    <Link 
+                                        to={`/questions/${question.questionId._id}`}
+                                        className="btn btn-primary btn-sm"
+                                    >
+                                        Solve
+                                    </Link>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
