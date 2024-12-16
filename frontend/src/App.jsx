@@ -12,10 +12,6 @@ import TopicContent from './components/learning/TopicContent'
 
 import Practice from './pages/Practice' 
 import Question from './pages/Question'
-import QuestionLists from './pages/QuestionLists'
-import QuestionListDetail from './pages/QuestionListDetail'
-import CreateEditList from './pages/CreateEditList'
-import UserLists from './pages/UserLists'
 
 import Compete from './pages/Compete' 
 
@@ -60,11 +56,6 @@ function App() {
 
                     <Route path="/practice" element={<Practice />} />
                     <Route path="/question/:questionNumber" element={<Question />} />
-                    <Route path="/lists" element={<QuestionLists />} />
-                    <Route path="/lists/create" element={<CreateEditList />} />
-                    <Route path="/lists/:id/edit" element={<CreateEditList />} />
-                    <Route path="/lists/:id" element={<QuestionListDetail />} />
-                    <Route path="/lists/user" element={<UserLists />} />
 
                     <Route path="/compete" element={<Compete />} />
 
