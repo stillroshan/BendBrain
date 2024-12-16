@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react'
 import PropTypes from 'prop-types'
 import moment from 'moment'
 import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
+import { AuthContext } from '../../context/AuthContext'
 
 const ActivityCalendar = ({ userId }) => {
     const { token } = useContext(AuthContext)
@@ -41,15 +41,6 @@ const ActivityCalendar = ({ userId }) => {
         if (count <= 10) return 'bg-primary/60'
         if (count <= 15) return 'bg-primary/80'
         return 'bg-primary'
-    }
-
-    const renderCalendarHeader = () => {
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        return days.map(day => (
-            <div key={day} className="text-xs text-base-content/60 h-8 flex items-center justify-center">
-                {day}
-            </div>
-        ))
     }
 
     const renderCalendar = () => {
@@ -103,33 +94,83 @@ const ActivityCalendar = ({ userId }) => {
         return calendar
     }
 
+    const renderCalendarHeader = () => {
+        const weekDays = [
+            { key: 'mon', label: 'M' },
+            { key: 'tue', label: 'T' },
+            { key: 'wed', label: 'W' },
+            { key: 'thu', label: 'T' },
+            { key: 'fri', label: 'F' },
+            { key: 'sat', label: 'S' },
+            { key: 'sun', label: 'S' }
+        ];
+        
+        return weekDays.map(day => (
+            <div key={day.key} className="text-xs font-medium text-base-content/70 text-center">
+                {day.label}
+            </div>
+        ));
+    };
+
     return (
-        <div className="card bg-base-100 shadow-lg p-6 pl-8 pr-8">
+        <div className="card bg-base-100 shadow-xl p-6">
             <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button 
-                        className="btn btn-sm btn-ghost"
+                        className="btn btn-circle btn-ghost btn-sm hover:bg-base-200"
                         onClick={() => setCurrentMonth(moment(currentMonth).subtract(1, 'month'))}
                     >
-                        ←
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                     </button>
-                    <span className="text-lg font-bold min-w-[120px] text-center">
+                    <h3 className="text-lg font-bold text-primary">
                         {currentMonth.format('MMMM YYYY')}
-                    </span>
+                    </h3>
                     <button 
-                        className="btn btn-sm btn-ghost"
+                        className="btn btn-circle btn-ghost btn-sm hover:bg-base-200"
                         onClick={() => setCurrentMonth(moment(currentMonth).add(1, 'month'))}
                     >
-                        →
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
                     </button>
                 </div>
             </div>
             
-            <div className="space-y-1">
-                <div className="grid grid-cols-7 gap-1">
+            <div className="space-y-2">
+                <div className="grid grid-cols-7 gap-1 mb-3">
                     {renderCalendarHeader()}
                 </div>
-                {renderCalendar()}
+
+                <div className="space-y-1">
+                    {renderCalendar().map((week, idx) => (
+                        <div key={idx} className="grid grid-cols-7 gap-1">
+                            {week.props.children.map((day, dayIdx) => {
+                                if (day.props.className === "w-8 h-8") {
+                                    return day; // Empty day cell
+                                }
+                                return (
+                                    <div 
+                                        key={dayIdx}
+                                        className={`
+                                            w-8 h-8 rounded-md
+                                            ${day.props.className}
+                                            transition-all duration-200
+                                            hover:transform hover:scale-110
+                                            hover:shadow-lg
+                                            flex items-center justify-center
+                                            text-xs font-medium
+                                        `}
+                                        title={day.props.title}
+                                    >
+                                        {day.props.children}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     )

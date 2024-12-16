@@ -59,11 +59,17 @@ app.use('/api/dashboard', dashboardRoutes)
 import discussionRoutes from './routes/discussionRoutes.js'
 app.use('/api/discussions', discussionRoutes)
 
-const server = createServer(app)
-const wss = setupWebSocket(server)
+const port = process.env.PORT || 4000
 
-// Listen
-const PORT = process.env.PORT || 4000
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
+const server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`)
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${port} is busy, trying ${port + 1}`)
+        server.listen(port + 1)
+    } else {
+        console.error(err)
+    }
 })
+
+const wss = setupWebSocket(server)

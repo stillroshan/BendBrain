@@ -1,40 +1,120 @@
 import SolvedQuestion from '../models/SolvedQuestion.js'
+import Question from '../models/Question.js'
 import DashboardProgress from '../models/DashboardProgress.js'
 import moment from 'moment'
 
 // Get progress metrics for a user
 const getUserProgress = async (req, res) => {
-    const userId = req.user._id
-    const { type, section, difficulty } = req.query
-
     try {
-        // Build a filter object for querying the solved questions
-        let query = { userId }
-        if (type) query.type = type
-        if (section) query.section = section
-        if (difficulty) query.difficulty = difficulty
+        const userId = req.user._id
 
-        // Get unique solved questions count (only status='Solved')
-        const uniqueQuestions = await SolvedQuestion.distinct('questionNumber', { ...query, status: 'Solved' })
+        // Get only uniquely solved questions (status = 'Solved')
+        const solvedQuestions = await SolvedQuestion.distinct('questionNumber', { 
+            userId, 
+            status: 'Solved' 
+        })
+
+        // Get attempted but not solved questions
+        const attemptedQuestions = await SolvedQuestion.distinct('questionNumber', { 
+            userId, 
+            status: 'Attempted' 
+        })
+
+        // Calculate total questions by difficulty
+        const totalQuestions = {
+            easy: await Question.countDocuments({ difficulty: 'Easy' }),
+            medium: await Question.countDocuments({ difficulty: 'Medium' }),
+            hard: await Question.countDocuments({ difficulty: 'Hard' })
+        }
+
+        // Get all solved questions with their difficulties
+        // First, get the latest status for each question
+        const latestStatusByQuestion = await SolvedQuestion.aggregate([
+            { 
+                $match: { 
+                    userId: userId
+                }
+            },
+            {
+                $sort: { createdAt: -1 } // Sort by latest attempt
+            },
+            {
+                $group: {
+                    _id: '$questionNumber',
+                    latestStatus: { $first: '$status' },
+                    difficulty: { $first: '$difficulty' }
+                }
+            },
+            {
+                $match: {
+                    latestStatus: 'Solved' // Only keep questions that are actually solved
+                }
+            },
+            {
+                $group: {
+                    _id: '$difficulty',
+                    count: { $sum: 1 }
+                }
+            }
+        ])
+
+        // Format difficulty breakdown
+        const difficultyBreakdown = {
+            easy: 0,
+            medium: 0,
+            hard: 0
+        }
+
+        latestStatusByQuestion.forEach(item => {
+            if (item._id === 'Easy') difficultyBreakdown.easy = item.count
+            if (item._id === 'Medium') difficultyBreakdown.medium = item.count
+            if (item._id === 'Hard') difficultyBreakdown.hard = item.count
+        })
+
+        // Get total number of attempts (all entries for this user)
+        const totalAttempts = await SolvedQuestion.countDocuments({ userId })
+
+        // Calculate total time across all attempts
+        const timeResult = await SolvedQuestion.aggregate([
+            { $match: { userId } },
+            { $group: { 
+                _id: null, 
+                totalTime: { $sum: '$timeSpent' } 
+            }}
+        ])
+        const totalTimeSpent = timeResult[0]?.totalTime || 0
+
+        // Calculate metrics
+        const totalQuestionsSolved = solvedQuestions.length
+        const totalQuestionsAttempted = attemptedQuestions.length
         
-        // Get all attempts for other metrics
-        const solvedQuestions = await SolvedQuestion.find(query)
+        // Average accuracy = (solved questions / total attempts) * 100
+        const averageAccuracy = totalAttempts > 0 
+            ? (totalQuestionsSolved / totalAttempts) * 100 
+            : 0
 
-        // Calculate the progress metrics
-        const totalQuestionsSolved = uniqueQuestions.length
-        const totalAccuracy = solvedQuestions.reduce((acc, q) => acc + q.accuracy, 0)
-        const totalTimeSpent = solvedQuestions.reduce((acc, q) => acc + q.timeSpent, 0)
-        const averageAccuracy = solvedQuestions.length ? (totalAccuracy / solvedQuestions.length) : 0
-        const averageTimeSpent = solvedQuestions.length ? (totalTimeSpent / solvedQuestions.length) : 0
+        // Average time = total time / total attempts
+        const averageTimeSpent = totalAttempts > 0 
+            ? totalTimeSpent / totalAttempts 
+            : 0
 
         res.json({
             totalQuestionsSolved,
+            totalQuestionsAttempted,
+            totalAttempts,
             totalTimeSpent,
-            averageAccuracy,
-            averageTimeSpent
+            averageAccuracy: Math.round(averageAccuracy * 100) / 100,
+            averageTimeSpent: Math.round(averageTimeSpent * 100) / 100,
+            difficultyBreakdown,
+            totalQuestions
         })
+
     } catch (error) {
-        res.status(500).json({ message: error.message})
+        console.error('Error in getUserProgress:', error)
+        res.status(500).json({ 
+            message: 'Error fetching user progress',
+            error: error.message 
+        })
     }
 }
 

@@ -4,10 +4,7 @@ import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
-router.route('/')
-    .get(protect, getUserProgress)
-
-router.route('/activity')
-    .get(protect, getActivityData)
+router.get('/progress', protect, getUserProgress)
+router.get('/activity', protect, getActivityData)
 
 export default router

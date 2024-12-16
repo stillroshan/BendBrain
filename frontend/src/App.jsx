@@ -1,8 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import DetailedFooter from './components/DetailedFooter'
-import SimpleFooter from './components/SimpleFooter'
 
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 
 import Home from './pages/Home' 
 
@@ -40,8 +39,13 @@ import ResetPassword from './pages/ResetPassword'
 
 function App() {
     const location = useLocation()
-    const isHomePage = location.pathname === '/'
-
+    
+    // Function to check if footer should be shown
+    const shouldShowFooter = () => {
+        const footerRoutes = ['/', '/learn']
+        return footerRoutes.includes(location.pathname)
+    }
+    
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
@@ -80,7 +84,7 @@ function App() {
                     <Route path="/resetpassword/:token" element={<ResetPassword />} />
                 </Routes>
             </main>
-            {isHomePage ? <DetailedFooter /> : <SimpleFooter />}
+            {shouldShowFooter() && <Footer />}
         </div>
     ) 
 }

@@ -7,7 +7,7 @@ import {
     FaYoutube
 } from 'react-icons/fa'
 
-const DetailedFooter = () => {
+const Footer = () => {
     return (
         <footer className="bg-base-200 text-base-content">
             {/* Main Footer Content */}
@@ -85,4 +85,4 @@ const DetailedFooter = () => {
     )
 }
 
-export default DetailedFooter 
+export default Footer 
