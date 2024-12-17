@@ -183,6 +183,8 @@ const Practice = () => {
                     showFilters={true}
                     initialFilters={filters}
                     onPickRandom={handlePickOne}
+                    showStats={true}
+                    showSection={false}
                 />
             </main>
 

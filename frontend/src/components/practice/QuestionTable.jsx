@@ -14,7 +14,10 @@ const QuestionTable = ({
         type: '',
         search: ''
     },
-    onPickRandom = null
+    onPickRandom = null,
+    showStats = true,
+    showSection = false,
+    customAction = null
 }) => {
     const [filters, setFilters] = useState(initialFilters)
     const [currentPage, setCurrentPage] = useState(1)
@@ -67,19 +70,7 @@ const QuestionTable = ({
                             <option value="Medium">Medium</option>
                             <option value="Hard">Hard</option>
                         </select>
-                        
-                        <select 
-                            name="status" 
-                            className="select select-bordered w-full" 
-                            onChange={handleFilterChange}
-                            value={filters.status}
-                        >
-                            <option value="">All Status</option>
-                            <option value="Solved">Solved</option>
-                            <option value="Unsolved">Unsolved</option>
-                            <option value="Attempted">Attempted</option>
-                        </select>
-                        
+
                         <select 
                             name="type" 
                             className="select select-bordered w-full" 
@@ -90,8 +81,22 @@ const QuestionTable = ({
                             <option value="MCQ">MCQ</option>
                             <option value="Integer">Integer</option>
                         </select>
+                        
+                        {!showSection && (
+                            <select 
+                                name="status" 
+                                className="select select-bordered w-full" 
+                                onChange={handleFilterChange}
+                                value={filters.status}
+                            >
+                                <option value="">All Status</option>
+                                <option value="Solved">Solved</option>
+                                <option value="Unsolved">Unsolved</option>
+                                <option value="Attempted">Attempted</option>
+                            </select>
+                        )}
 
-                        <div className="relative">
+                        <div className={`relative ${showSection ? 'lg:col-span-2' : ''}`}>
                             <input 
                                 type="text" 
                                 name="search"
@@ -105,12 +110,12 @@ const QuestionTable = ({
                             </svg>
                         </div>
 
-                        {onPickRandom && (
+                        {(onPickRandom || customAction) && (
                             <button 
                                 className="btn btn-primary w-full" 
-                                onClick={onPickRandom}
+                                onClick={onPickRandom || customAction}
                             >
-                                Pick Random
+                                {onPickRandom ? 'Pick Random' : 'Create Question'}
                             </button>
                         )}
                     </div>
@@ -125,11 +130,20 @@ const QuestionTable = ({
                             <tr className="bg-base-200">
                                 <th className="font-bold">Number</th>
                                 <th className="font-bold">Title</th>
+                                {showSection && (
+                                    <th className="font-bold">Section</th>
+                                )}
                                 <th className="font-bold">Difficulty</th>
                                 <th className="font-bold">Type</th>
-                                <th className="font-bold">Status</th>
-                                <th className="font-bold">Accuracy</th>
-                                <th className="font-bold">Time Spent</th>
+                                {!showSection && (
+                                    <th className="font-bold">Status</th>
+                                )}
+                                {showStats && (
+                                    <>
+                                        <th className="font-bold">Accuracy</th>
+                                        <th className="font-bold">Time Spent</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -137,10 +151,15 @@ const QuestionTable = ({
                                 <tr 
                                     key={question._id} 
                                     className="hover:bg-base-200 cursor-pointer transition-colors duration-200" 
-                                    onClick={() => window.location.href = `/question/${question.questionNumber}`}
+                                    onClick={() => window.location.href = showSection ? 
+                                        `/admin/question/${question.questionNumber}` : 
+                                        `/question/${question.questionNumber}`}
                                 >
                                     <td className="font-medium">{question.questionNumber}</td>
                                     <td>{question.title}</td>
+                                    {showSection && (
+                                        <td>{question.section}</td>
+                                    )}
                                     <td>
                                         <span className={`font-medium ${
                                             question.difficulty === 'Hard' ? 'text-error' :
@@ -151,17 +170,23 @@ const QuestionTable = ({
                                         </span>
                                     </td>
                                     <td>{question.type}</td>
-                                    <td>
-                                        <span className={`badge ${
-                                            question.status === 'Solved' ? 'badge-success' :
-                                            question.status === 'Attempted' ? 'badge-warning' :
-                                            'badge-ghost'
-                                        } badge-sm`}>
-                                            {question.status}
-                                        </span>
-                                    </td>
-                                    <td className="font-medium">{question.avgAccuracy?.toFixed(2)}%</td>
-                                    <td className="font-medium">{question.avgTimeSpent?.toFixed(2)}s</td>
+                                    {!showSection && (
+                                        <td>
+                                            <span className={`badge ${
+                                                question.status === 'Solved' ? 'badge-success' :
+                                                question.status === 'Attempted' ? 'badge-warning' :
+                                                'badge-ghost'
+                                            } badge-sm`}>
+                                                {question.status}
+                                            </span>
+                                        </td>
+                                    )}
+                                    {showStats && (
+                                        <>
+                                            <td className="font-medium">{question.avgAccuracy?.toFixed(2)}%</td>
+                                            <td className="font-medium">{question.avgTimeSpent?.toFixed(2)}s</td>
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -212,7 +237,10 @@ QuestionTable.propTypes = {
         type: PropTypes.string,
         search: PropTypes.string
     }),
-    onPickRandom: PropTypes.func
+    onPickRandom: PropTypes.func,
+    showStats: PropTypes.bool,
+    showSection: PropTypes.bool,
+    customAction: PropTypes.func
 }
 
 export default QuestionTable
