@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
-import ProfilePictureUpload from '../components/ProfilePictureUpload'
+import { AuthContext } from '../../context/AuthContext'
+import ProfilePictureUpload from '../../components/profile/ProfilePictureUpload'
 
 const Profile = () => {
   const { user, token } = useContext(AuthContext)

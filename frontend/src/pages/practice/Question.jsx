@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
-import QuestionDiscussion from '../components/QuestionDiscussion'
+import { AuthContext } from '../../context/AuthContext'
+import QuestionDiscussion from '../../components/practice/QuestionDiscussion'
 
 const QuestionPage = () => {
     const { questionNumber } = useParams()

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import QuestionManager from '../components/admin/QuestionManager'
-import LearningManager from '../components/admin/LearningManager'
+import QuestionManager from '../../components/admin/QuestionManager'
+import LearningManager from '../../components/admin/LearningManager'
 
 const Admin = () => {
     const [activeTab, setActiveTab] = useState('questions')

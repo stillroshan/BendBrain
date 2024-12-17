@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
+import { useState, useEffect, useContext, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { AuthContext } from '../../context/AuthContext'
 import axios from 'axios'
 import moment from 'moment'
 import { 
@@ -16,7 +16,6 @@ import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import { HandThumbDownIcon as HandThumbDownIconSolid } from '@heroicons/react/24/solid'
 
 const Discuss = () => {
-    const navigate = useNavigate()
     const { user } = useContext(AuthContext)
     const [discussions, setDiscussions] = useState([])
     const [loading, setLoading] = useState(true)
@@ -28,11 +27,7 @@ const Discuss = () => {
         'Exams', 'Jobs', 'Interview', 'News', 'Feedback', 'Other'
     ]
 
-    useEffect(() => {
-        fetchDiscussions()
-    }, [filter, category])
-
-    const fetchDiscussions = async () => {
+    const fetchDiscussions = useCallback(async () => {
         try {
             const params = {}
             if (filter !== 'all') params.filter = filter
@@ -45,7 +40,11 @@ const Discuss = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [filter, category])
+
+    useEffect(() => {
+        fetchDiscussions()
+    }, [fetchDiscussions])
 
     const handleLike = async (discussionId) => {
         try {

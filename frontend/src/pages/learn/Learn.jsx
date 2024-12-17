@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import CourseCard from '../components/learning/CourseCard'
-import SubjectCard from '../components/learning/SubjectCard'
+import CourseCard from '../../components/learn/CourseCard'
+import SubjectCard from '../../components/learn/SubjectCard'
 import { AcademicCapIcon, BookOpenIcon } from '@heroicons/react/24/outline'
 
 const Learn = () => {

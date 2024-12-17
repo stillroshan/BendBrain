@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import ThemeSelector from '../utils/ThemeSelector'
+import ThemeSelector from '../../utils/ThemeSelector.jsx'
 import { useContext } from 'react'
-import { AuthContext } from '../context/AuthContext.jsx'
+import { AuthContext } from '../../context/AuthContext.jsx'
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext)

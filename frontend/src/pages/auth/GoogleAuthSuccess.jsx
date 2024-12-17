@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
+import { AuthContext } from '../../context/AuthContext'
 
 const GoogleAuthSuccess = () => {
     const { search } = useLocation()

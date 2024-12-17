@@ -1,36 +1,45 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+// Layout Components
+import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 
-import Home from './pages/Home' 
+// Home Page
+import Home from './pages/home/Home' 
 
-import Learn from './pages/Learn'
-import CourseDetail from './pages/CourseDetail'
-import SubjectDetail from './pages/SubjectDetail'
-import TopicContent from './components/learning/TopicContent'
+// Learn Pages
+import Learn from './pages/learn/Learn'
+import CourseDetail from './pages/learn/CourseDetail'
+import SubjectDetail from './pages/learn/SubjectDetail'
+import TopicContent from './components/learn/TopicContent'
 
-import Practice from './pages/Practice' 
-import Question from './pages/Question'
+// Practice Pages
+import Practice from './pages/practice/Practice' 
+import Question from './pages/practice/Question'
+import QuestionList from './pages/practice/QuestionList'
 
-import Compete from './pages/Compete' 
+// Compete Pages
+import Compete from './pages/compete/Compete' 
 
-import Discuss from './pages/Discuss'
-import NewDiscussion from './pages/NewDiscussion'
-import DiscussionDetail from './pages/DiscussionDetail'
+// Discuss Pages
+import Discuss from './pages/discuss/Discuss'
+import NewDiscussion from './pages/discuss/NewDiscussion'
+import DiscussionDetail from './pages/discuss/DiscussionDetail'
 
+// Admin Pages
+import Admin from './pages/admin/Admin'
+import EditQuestion from './pages/admin/EditQuestion'
 
+// Profile Pages
+import Profile from './pages/profile/Profile'
+import Settings from './pages/profile/Settings'
 
-import Admin from './pages/Admin'
-import EditQuestion from './pages/EditQuestion'
-
-import Profile from './pages/Profile'
-import Settings from './pages/Settings'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
+// Auth Pages
+import Login from './pages/auth/Login'
+import Signup from './pages/auth/Signup'
+import GoogleAuthSuccess from './pages/auth/GoogleAuthSuccess'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 
 
 function App() {
@@ -56,6 +65,8 @@ function App() {
 
                     <Route path="/practice" element={<Practice />} />
                     <Route path="/question/:questionNumber" element={<Question />} />
+                    <Route path="/lists" element={<QuestionList />} />
+                    <Route path="/lists/:listId" element={<QuestionList />} />
 
                     <Route path="/compete" element={<Compete />} />
 

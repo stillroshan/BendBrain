@@ -8,9 +8,9 @@ import {
     EyeSlashIcon 
 } from '@heroicons/react/24/outline'
 import { AuthContext } from '../../context/AuthContext'
-import CourseForm from '../forms/CourseForm'
-import SubjectForm from '../forms/SubjectForm'
-import TopicForm from '../forms/TopicForm'
+import CourseForm from './CourseForm'
+import SubjectForm from './SubjectForm'
+import TopicForm from './TopicForm'
 
 const LearningManager = () => {
     const { token } = useContext(AuthContext)
