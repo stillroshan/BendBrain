@@ -112,181 +112,202 @@ const EditQuestion = () => {
     }
 
     return (
-        <div className="container mx-auto p-4 max-w-4xl mt-16">
-            <h1 className="text-3xl font-bold mb-4">
-                {isNewQuestion ? 'Create Question' : 'Edit Question'}
-            </h1>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Question Number */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Question Number</span>
-                    </label>
-                    <input 
-                        name="questionNumber" 
-                        value={question.questionNumber} 
-                        onChange={handleChange} 
-                        placeholder="Question Number" 
-                        className="input input-bordered w-3/4" 
-                        required 
-                    />
-                </div>
-
-                {/* Title */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Title</span>
-                    </label>
-                    <input 
-                        name="title" 
-                        value={question.title} 
-                        onChange={handleChange} 
-                        placeholder="Title" 
-                        className="input input-bordered w-3/4" 
-                        required 
-                    />
-                </div>
-
-                {/* Statement */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Statement</span>
-                    </label>
-                    <textarea 
-                        name="statement" 
-                        value={question.statement} 
-                        onChange={handleChange} 
-                        placeholder="Statement" 
-                        className="textarea textarea-bordered w-3/4" 
-                        required 
-                    />
-                </div>
-
-                {/* Type */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Type</span>
-                    </label>
-                    <select 
-                        name="type" 
-                        value={question.type} 
-                        onChange={handleChange} 
-                        className="select select-bordered w-3/4"
-                    >
-                        <option value="MCQ">MCQ</option>
-                        <option value="Integer">Integer</option>
-                    </select>
-                </div>
-
-                {/* MCQ Options (only if type is MCQ) */}
-                {question.type === 'MCQ' && (
-                    <>
-                        {question.options.map((option, index) => (
-                            <div key={index} className="form-control flex flex-row items-center">
-                                <label className="label w-1/4 text-right">
-                                    <span className="label-text">Option {index + 1}</span>
-                                </label>
-                                <input 
-                                    name={`option-${index}`} 
-                                    value={option} 
-                                    onChange={handleChange} 
-                                    placeholder={`Option ${index + 1}`} 
-                                    className="input input-bordered w-3/4" 
-                                />
-                            </div>
-                        ))}
-                    </>
-                )}
-
-                {/* Answer */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Answer</span>
-                    </label>
-                    <input 
-                        name="answer" 
-                        value={question.answer} 
-                        onChange={handleChange} 
-                        placeholder="Answer" 
-                        className="input input-bordered w-3/4" 
-                        required 
-                    />
-                </div>
-
-                {/* Hint */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Hint</span>
-                    </label>
-                    <textarea 
-                        name="hint" 
-                        value={question.hint} 
-                        onChange={handleChange} 
-                        placeholder="Hint" 
-                        className="textarea textarea-bordered w-3/4" 
-                    />
-                </div>
-
-                {/* Explanation */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Explanation</span>
-                    </label>
-                    <textarea 
-                        name="explanation" 
-                        value={question.explanation} 
-                        onChange={handleChange} 
-                        placeholder="Explanation" 
-                        className="textarea textarea-bordered w-3/4" 
-                    />
-                </div>
-
-                {/* Section */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Section</span>
-                    </label>
-                    <select 
-                        name="section" 
-                        value={question.section} 
-                        onChange={handleChange} 
-                        className="select select-bordered w-3/4"
-                    >
-                        <option value="Numerical Ability">Numerical Ability</option>
-                        <option value="Verbal Reasoning">Verbal Reasoning</option>
-                        <option value="Non-verbal Reasoning">Non-verbal Reasoning</option>
-                        <option value="Verbal Ability">Verbal Ability</option>
-                        <option value="Quantitative Aptitude">Quantitative Aptitude</option>
-                        <option value="Data Interpretation">Data Interpretation</option>
-                    </select>
-                </div>
-
-                {/* Difficulty */}
-                <div className="form-control flex flex-row items-center">
-                    <label className="label w-1/4 text-right">
-                        <span className="label-text">Difficulty</span>
-                    </label>
-                    <select 
-                        name="difficulty" 
-                        value={question.difficulty} 
-                        onChange={handleChange} 
-                        className="select select-bordered w-3/4"
-                    >
-                        <option value="Easy">Easy</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Hard">Hard</option>
-                    </select>
-                </div>
-
-                {/* Submit and Delete Buttons */}
-                <div className="form-control flex justify-center space-x-4">
-                    <button type="submit" className="btn btn-primary">Submit</button>
+        <div className="container mx-auto p-6 max-w-4xl mt-16">
+            <div className="bg-base-100 shadow-lg rounded-lg p-8">
+                <div className="flex justify-between items-center mb-8 pb-4 border-b border-base-300">
+                    <h1 className="text-3xl font-bold">
+                        {isNewQuestion ? 'Create New Question' : 'Edit Question'}
+                    </h1>
                     {!isNewQuestion && (
-                        <button type="button" onClick={handleDelete} className="btn btn-error">Delete</button>
+                        <button 
+                            type="button" 
+                            onClick={handleDelete} 
+                            className="btn btn-error btn-outline"
+                        >
+                            Delete Question
+                        </button>
                     )}
                 </div>
-            </form>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Question Number and Title in a grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Question Number</span>
+                            </label>
+                            <input 
+                                name="questionNumber" 
+                                value={question.questionNumber} 
+                                onChange={handleChange} 
+                                placeholder="Enter question number" 
+                                className="input input-bordered" 
+                                required 
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Title</span>
+                            </label>
+                            <input 
+                                name="title" 
+                                value={question.title} 
+                                onChange={handleChange} 
+                                placeholder="Enter question title" 
+                                className="input input-bordered" 
+                                required 
+                            />
+                        </div>
+                    </div>
+
+                    {/* Statement */}
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text font-medium">Question Statement</span>
+                        </label>
+                        <textarea 
+                            name="statement" 
+                            value={question.statement} 
+                            onChange={handleChange} 
+                            placeholder="Enter question statement" 
+                            className="textarea textarea-bordered min-h-[120px]" 
+                            required 
+                        />
+                    </div>
+
+                    {/* Type, Section, and Difficulty in a grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Type</span>
+                            </label>
+                            <select 
+                                name="type" 
+                                value={question.type} 
+                                onChange={handleChange} 
+                                className="select select-bordered w-full"
+                            >
+                                <option value="MCQ">MCQ</option>
+                                <option value="Integer">Integer</option>
+                            </select>
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Section</span>
+                            </label>
+                            <select 
+                                name="section" 
+                                value={question.section} 
+                                onChange={handleChange} 
+                                className="select select-bordered w-full"
+                            >
+                                <option value="Numerical Ability">Numerical Ability</option>
+                                <option value="Verbal Reasoning">Verbal Reasoning</option>
+                                <option value="Non-verbal Reasoning">Non-verbal Reasoning</option>
+                                <option value="Verbal Ability">Verbal Ability</option>
+                                <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                                <option value="Data Interpretation">Data Interpretation</option>
+                            </select>
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Difficulty</span>
+                            </label>
+                            <select 
+                                name="difficulty" 
+                                value={question.difficulty} 
+                                onChange={handleChange} 
+                                className="select select-bordered w-full"
+                            >
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* MCQ Options */}
+                    {question.type === 'MCQ' && (
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">MCQ Options</span>
+                            </label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                {question.options.map((option, index) => (
+                                    <div key={index} className="form-control">
+                                        <div className="input-group">
+                                            <span className="bg-base-100 px-4 flex items-center font-medium">
+                                                {String.fromCharCode(65 + index)}
+                                            </span>
+                                            <input 
+                                                name={`option-${index}`} 
+                                                value={option} 
+                                                onChange={handleChange} 
+                                                placeholder={`Enter option ${String.fromCharCode(65 + index)}`} 
+                                                className="input input-bordered w-full" 
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Answer */}
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text font-medium">Answer</span>
+                        </label>
+                        <input 
+                            name="answer" 
+                            value={question.answer} 
+                            onChange={handleChange} 
+                            placeholder="Enter correct answer" 
+                            className="input input-bordered" 
+                            required 
+                        />
+                    </div>
+
+                    {/* Hint and Explanation */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Hint</span>
+                            </label>
+                            <textarea 
+                                name="hint" 
+                                value={question.hint} 
+                                onChange={handleChange} 
+                                placeholder="Enter hint (optional)" 
+                                className="textarea textarea-bordered min-h-[100px]" 
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-medium">Explanation</span>
+                            </label>
+                            <textarea 
+                                name="explanation" 
+                                value={question.explanation} 
+                                onChange={handleChange} 
+                                placeholder="Enter explanation (optional)" 
+                                className="textarea textarea-bordered min-h-[100px]" 
+                            />
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="mt-8 flex justify-center">
+                        <button type="submit" className="btn btn-primary btn-wide">
+                            {isNewQuestion ? 'Create Question' : 'Save Changes'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     )
 }

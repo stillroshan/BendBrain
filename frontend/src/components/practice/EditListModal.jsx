@@ -9,6 +9,7 @@ import {
     ArrowsUpDownIcon 
 } from '@heroicons/react/24/outline'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import QuestionTable from '../practice/QuestionTable'
 
 const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
     const { token } = useContext(AuthContext)
@@ -19,9 +20,33 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [searchTerm, setSearchTerm] = useState('')
-    const [searchResults, setSearchResults] = useState([])
-    const [searching, setSearching] = useState(false)
+    const [availableQuestions, setAvailableQuestions] = useState([])
+    const [selectedQuestions, setSelectedQuestions] = useState([])
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const [filters, setFilters] = useState({
+        section: '',
+        difficulty: '',
+        type: '',
+        search: ''
+    })
+
+    // Fetch available questions
+    const fetchQuestions = async (page, filters) => {
+        try {
+            const { data } = await axios.get('/api/questions', {
+                params: {
+                    ...filters,
+                    page,
+                    limit: 10
+                }
+            })
+            setAvailableQuestions(data.questions)
+            setTotalPages(data.totalPages)
+        } catch (error) {
+            console.error('Error fetching questions:', error)
+        }
+    }
 
     useEffect(() => {
         if (list) {
@@ -30,28 +55,36 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
                 visibility: list.visibility,
                 questions: list.questions.map(q => q.question.questionNumber)
             })
+            // Set selected questions
+            const selectedQs = list.questions.map(q => ({
+                ...q.question,
+                orderNumber: q.orderNumber
+            }))
+            setSelectedQuestions(selectedQs)
         }
+        fetchQuestions(1, filters)
     }, [list])
 
-    // Debounced search function
-    useEffect(() => {
-        const timeoutId = setTimeout(async () => {
-            if (searchTerm) {
-                setSearching(true)
-                try {
-                    const { data } = await axios.get(`/api/questions/search?q=${searchTerm}`)
-                    setSearchResults(data.questions)
-                } catch (error) {
-                    console.error('Error searching questions:', error)
-                }
-                setSearching(false)
-            } else {
-                setSearchResults([])
-            }
-        }, 500)
+    const handleAddQuestion = (question) => {
+        if (!selectedQuestions.find(q => q.questionNumber === question.questionNumber)) {
+            setSelectedQuestions([...selectedQuestions, {
+                ...question,
+                orderNumber: selectedQuestions.length + 1
+            }])
+            setFormData(prev => ({
+                ...prev,
+                questions: [...prev.questions, question.questionNumber]
+            }))
+        }
+    }
 
-        return () => clearTimeout(timeoutId)
-    }, [searchTerm])
+    const handleRemoveQuestion = (questionNumber) => {
+        setSelectedQuestions(selectedQuestions.filter(q => q.questionNumber !== questionNumber))
+        setFormData(prev => ({
+            ...prev,
+            questions: prev.questions.filter(q => q !== questionNumber)
+        }))
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -59,7 +92,10 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
         setLoading(true)
 
         try {
-            await axios.put(`/api/lists/${list._id}`, formData, {
+            await axios.put(`/api/lists/${list._id}`, {
+                ...formData,
+                questions: selectedQuestions.map(q => q.questionNumber)
+            }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             onSuccess()
@@ -70,58 +106,12 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
         }
     }
 
-    const handleAddQuestion = (questionNumber) => {
-        if (!formData.questions.includes(questionNumber)) {
-            setFormData(prev => ({
-                ...prev,
-                questions: [...prev.questions, questionNumber]
-            }))
-        }
-        setSearchTerm('')
-        setSearchResults([])
-    }
-
-    const handleRemoveQuestion = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            questions: prev.questions.filter((_, i) => i !== index)
-        }))
-    }
-
-    const handleDragEnd = (result) => {
-        if (!result.destination) return
-
-        const questions = Array.from(formData.questions)
-        const [reorderedItem] = questions.splice(result.source.index, 1)
-        questions.splice(result.destination.index, 0, reorderedItem)
-
-        setFormData(prev => ({
-            ...prev,
-            questions
-        }))
-    }
-
-    if (!isOpen) return null
-
     return (
-        <div className="modal modal-open">
-            <div className="modal-box max-w-3xl">
-                <button 
-                    className="btn btn-sm btn-circle absolute right-2 top-2"
-                    onClick={onClose}
-                >
-                    <XMarkIcon className="w-5 h-5" />
-                </button>
-                
+        <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
+            <div className="modal-box w-11/12 max-w-5xl">
                 <h3 className="font-bold text-lg mb-4">Edit List</h3>
                 
                 <form onSubmit={handleSubmit}>
-                    {error && (
-                        <div className="alert alert-error mb-4">
-                            <span>{error}</span>
-                        </div>
-                    )}
-
                     <div className="form-control mb-4">
                         <label className="label">
                             <span className="label-text">Title</span>
@@ -155,96 +145,69 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
                         </select>
                     </div>
 
-                    {/* Question Search */}
-                    <div className="form-control mb-4">
-                        <label className="label">
-                            <span className="label-text">Add Questions</span>
-                        </label>
-                        <div className="relative">
-                            <input 
-                                type="text"
-                                className="input input-bordered w-full"
-                                placeholder="Search questions..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                    <div className="space-y-6">
+                        {/* Selected Questions */}
+                        <div>
+                            <h4 className="font-bold mb-2">Selected Questions</h4>
+                            <QuestionTable 
+                                questions={selectedQuestions}
+                                totalPages={1}
+                                onPageChange={() => {}}
+                                onFilterChange={() => {}}
+                                showFilters={false}
+                                showStats={false}
+                                showSection={true}
+                                customAction={(question) => (
+                                    <button 
+                                        className="btn btn-error btn-sm"
+                                        onClick={() => handleRemoveQuestion(question.questionNumber)}
+                                    >
+                                        Remove
+                                    </button>
+                                )}
                             />
-                            {searching && (
-                                <div className="absolute right-3 top-3">
-                                    <span className="loading loading-spinner loading-sm"></span>
-                                </div>
-                            )}
-                            {searchResults.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-base-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                                    {searchResults.map(question => (
-                                        <button
-                                            key={question.questionNumber}
-                                            type="button"
-                                            className="w-full p-2 hover:bg-base-300 flex items-center justify-between"
-                                            onClick={() => handleAddQuestion(question.questionNumber)}
-                                        >
-                                            <span>{question.title}</span>
-                                            <PlusIcon className="w-5 h-5" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                        </div>
+
+                        {/* Available Questions */}
+                        <div>
+                            <h4 className="font-bold mb-2">Available Questions</h4>
+                            <QuestionTable 
+                                questions={availableQuestions}
+                                totalPages={totalPages}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page)
+                                    fetchQuestions(page, filters)
+                                }}
+                                onFilterChange={(newFilters) => {
+                                    setFilters(newFilters)
+                                    fetchQuestions(1, newFilters)
+                                }}
+                                showFilters={true}
+                                showStats={false}
+                                showSection={true}
+                                showStatus={true}
+                                customAction={(question) => (
+                                    <button 
+                                        className="btn btn-primary btn-sm"
+                                        onClick={() => handleAddQuestion(question)}
+                                    >
+                                        Add
+                                    </button>
+                                )}
+                            />
                         </div>
                     </div>
 
-                    {/* Questions List */}
-                    <div className="mb-6">
-                        <label className="label">
-                            <span className="label-text">Questions</span>
-                            <span className="label-text-alt">Drag to reorder</span>
-                        </label>
-                        <DragDropContext onDragEnd={handleDragEnd}>
-                            <Droppable droppableId="questions">
-                                {(provided) => (
-                                    <div
-                                        {...provided.droppableProps}
-                                        ref={provided.innerRef}
-                                        className="space-y-2"
-                                    >
-                                        {formData.questions.map((questionNumber, index) => (
-                                            <Draggable
-                                                key={questionNumber}
-                                                draggableId={questionNumber.toString()}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        className="flex items-center gap-2 p-2 bg-base-200 rounded-lg"
-                                                    >
-                                                        <div {...provided.dragHandleProps}>
-                                                            <ArrowsUpDownIcon className="w-5 h-5 text-base-content/70" />
-                                                        </div>
-                                                        <span className="flex-1">
-                                                            Question {questionNumber}
-                                                        </span>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-ghost btn-sm"
-                                                            onClick={() => handleRemoveQuestion(index)}
-                                                        >
-                                                            <TrashIcon className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-                    </div>
+                    {error && (
+                        <div className="alert alert-error mt-4">
+                            {error}
+                        </div>
+                    )}
 
                     <div className="modal-action">
                         <button 
                             type="button" 
-                            className="btn"
+                            className="btn" 
                             onClick={onClose}
                         >
                             Cancel
@@ -254,16 +217,12 @@ const EditListModal = ({ isOpen, onClose, list, onSuccess }) => {
                             className="btn btn-primary"
                             disabled={loading}
                         >
-                            {loading ? (
-                                <span className="loading loading-spinner"></span>
-                            ) : (
-                                'Save Changes'
-                            )}
+                            {loading ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>
             </div>
-        </div>
+        </dialog>
     )
 }
 

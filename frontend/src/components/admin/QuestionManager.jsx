@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import QuestionTable from '../practice/QuestionTable'
+import { AuthContext } from '../../context/AuthContext'
 
 const QuestionManager = () => {
+    const { token } = useContext(AuthContext)
     const [questions, setQuestions] = useState([])
     const [filters, setFilters] = useState({
         section: '',
@@ -44,6 +46,32 @@ const QuestionManager = () => {
         navigate('/admin/question/new')
     }
 
+    const handleEdit = (questionNumber) => {
+        navigate(`/admin/question/${questionNumber}`)
+    }
+
+    const handleDelete = async (questionNumber) => {
+        if (window.confirm('Are you sure you want to delete this question?')) {
+            try {
+                await axios.delete(`/api/questions/${questionNumber}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                // Refresh questions list
+                const response = await axios.get('/api/questions', {
+                    params: {
+                        ...filters,
+                        page: currentPage,
+                        limit: 50
+                    }
+                })
+                setQuestions(response.data.questions || [])
+                setTotalPages(response.data.totalPages || 1)
+            } catch (error) {
+                console.error('Error deleting question:', error)
+            }
+        }
+    }
+
     return (
         <QuestionTable 
             questions={questions}
@@ -55,6 +83,9 @@ const QuestionManager = () => {
             showStats={false}
             showSection={true}
             customAction={handleCreateQuestion}
+            showActions={true}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
         />
     )
 }

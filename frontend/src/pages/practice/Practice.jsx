@@ -19,7 +19,7 @@ const Practice = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [progress, setProgress] = useState(null)
-    const [isAsideVisible, setIsAsideVisible] = useState(true)
+    const [isAsideVisible, setIsAsideVisible] = useState(window.innerWidth >= 1440)
 
     // fetch questions based on filters
     useEffect(() => {
@@ -99,16 +99,14 @@ const Practice = () => {
     }, [token])
 
     useEffect(() => {
-        const initialWidth = window.innerWidth
-        
-        const handleResize = () => {
-            const currentWidth = window.innerWidth
-            const shrinkagePercent = ((initialWidth - currentWidth) / initialWidth) * 100
-            setIsAsideVisible(shrinkagePercent <= 10)
+        const checkWidth = () => {
+            setIsAsideVisible(window.innerWidth >= 1440)
         }
 
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
+        window.addEventListener('resize', checkWidth)
+        checkWidth()
+
+        return () => window.removeEventListener('resize', checkWidth)
     }, [])
 
     return (
@@ -185,6 +183,7 @@ const Practice = () => {
                     onPickRandom={handlePickOne}
                     showStats={true}
                     showSection={false}
+                    showStatus={true}
                 />
             </main>
 
