@@ -5,8 +5,6 @@ import {
     ShareIcon,
     BookmarkIcon,
     DocumentDuplicateIcon,
-    LockClosedIcon,
-    LockOpenIcon,
     ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid'
@@ -21,8 +19,8 @@ const ListContent = ({
     onDelete, 
     onFork, 
     onToggleSave,
-    onToggleVisibility,
-    isCreator 
+    isCreator,
+    onPageChange
 }) => {
     const [filters, setFilters] = useState({
         section: '',
@@ -30,7 +28,6 @@ const ListContent = ({
         type: '',
         search: ''
     })
-    const [currentPage, setCurrentPage] = useState(1)
     const [showShareTooltip, setShowShareTooltip] = useState(false)
 
     // Filter questions based on current filters
@@ -54,6 +51,29 @@ const ListContent = ({
         navigator.clipboard.writeText(url)
         setShowShareTooltip(true)
         setTimeout(() => setShowShareTooltip(false), 2000)
+    }
+
+    const handlePickRandom = () => {
+        const filteredQuestions = list.questions.filter(q => {
+            const question = q.question
+            return (
+                (!filters.section || question.section === filters.section) &&
+                (!filters.difficulty || question.difficulty === filters.difficulty) &&
+                (!filters.type || question.type === filters.type) &&
+                (!filters.search || 
+                    question.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    question.questionNumber.toString().includes(filters.search))
+            )
+        })
+
+        if (filteredQuestions.length === 0) {
+            alert('No questions available with the selected filters')
+            return
+        }
+
+        const randomIndex = Math.floor(Math.random() * filteredQuestions.length)
+        const randomQuestion = filteredQuestions[randomIndex].question
+        window.location.href = `/question/${randomQuestion.questionNumber}`
     }
 
     return (
@@ -102,13 +122,21 @@ const ListContent = ({
                                 </button>
                                 <button 
                                     className="btn btn-ghost btn-sm"
-                                    onClick={onToggleVisibility}
+                                    onClick={onToggleSave}
                                 >
-                                    {list.visibility === 'private' ? (
-                                        <LockClosedIcon className="h-5 w-5" />
+                                    {list.savedBy?.some(user => 
+                                        (typeof user === 'string' ? user : user._id) === list.creator._id
+                                    ) ? (
+                                        <BookmarkSolidIcon className="h-5 w-5 text-primary" />
                                     ) : (
-                                        <LockOpenIcon className="h-5 w-5" />
+                                        <BookmarkIcon className="h-5 w-5" />
                                     )}
+                                </button>
+                                <button 
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={onFork}
+                                >
+                                    <DocumentDuplicateIcon className="h-5 w-5" />
                                 </button>
                             </>
                         )}
@@ -125,22 +153,6 @@ const ListContent = ({
                                 </div>
                             )}
                         </div>
-                        <button 
-                            className="btn btn-ghost btn-sm"
-                            onClick={onToggleSave}
-                        >
-                            {list.savedBy?.includes(list.creator._id) ? (
-                                <BookmarkSolidIcon className="h-5 w-5 text-primary" />
-                            ) : (
-                                <BookmarkIcon className="h-5 w-5" />
-                            )}
-                        </button>
-                        <button 
-                            className="btn btn-ghost btn-sm"
-                            onClick={onFork}
-                        >
-                            <DocumentDuplicateIcon className="h-5 w-5" />
-                        </button>
                     </div>
                 </div>
 
@@ -149,13 +161,14 @@ const ListContent = ({
                     <ListQuestionTable 
                         questions={filteredQuestions}
                         totalPages={Math.ceil(filteredQuestions.length / 50)}
-                        onPageChange={setCurrentPage}
+                        onPageChange={onPageChange}
                         onFilterChange={setFilters}
                         showFilters={true}
                         initialFilters={filters}
                         showSection={true}
                         showOrder={true}
                         showActions={false}
+                        onPickRandom={handlePickRandom}
                     />
                 </div>
             </div>
@@ -171,19 +184,27 @@ ListContent.propTypes = {
             username: PropTypes.string.isRequired
         }).isRequired,
         visibility: PropTypes.string.isRequired,
-        savedBy: PropTypes.arrayOf(PropTypes.string),
+        savedBy: PropTypes.arrayOf(PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({
+                _id: PropTypes.string.isRequired,
+                username: PropTypes.string
+            })
+        ])),
         questions: PropTypes.arrayOf(PropTypes.shape({
             question: PropTypes.object.isRequired,
             order: PropTypes.number.isRequired
         })).isRequired,
         isFavorites: PropTypes.bool
     }).isRequired,
+    isDrawerOpen: PropTypes.bool.isRequired,
+    onToggleDrawer: PropTypes.func.isRequired,
     onEdit: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onFork: PropTypes.func.isRequired,
     onToggleSave: PropTypes.func.isRequired,
-    onToggleVisibility: PropTypes.func.isRequired,
-    isCreator: PropTypes.bool.isRequired
+    isCreator: PropTypes.bool.isRequired,
+    onPageChange: PropTypes.func.isRequired
 }
 
 export default ListContent 

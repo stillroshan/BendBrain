@@ -39,7 +39,7 @@ const listSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 // Ensure favorite lists can't be deleted
-listSchema.pre('remove', function(next) {
+listSchema.pre('deleteOne', { document: true, query: false }, function(next) {
     if (this.isFavorites) {
         next(new Error('Cannot delete favorites list'))
     }

@@ -1,16 +1,14 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import axios from 'axios'
-import { AuthContext } from '../../context/AuthContext'
 import ListQuestionTable from './ListQuestionTable'
 import PropTypes from 'prop-types'
 
 const ListModal = ({ list = null, onClose, onSubmit }) => {
-    const { token } = useContext(AuthContext)
     const [title, setTitle] = useState(list?.title || '')
     const [visibility, setVisibility] = useState(list?.visibility || 'private')
     const [selectedQuestions, setSelectedQuestions] = useState(
-        list?.questions.map((q, index) => ({
+        list?.questions.map(q => ({
             ...q.question,
             order: q.order
         })) || []
@@ -51,7 +49,7 @@ const ListModal = ({ list = null, onClose, onSubmit }) => {
             visibility,
             questions: selectedQuestions.map((q, index) => ({
                 question: q._id,
-                order: q.order
+                order: index + 1
             }))
         })
     }

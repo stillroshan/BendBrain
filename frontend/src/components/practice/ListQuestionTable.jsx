@@ -19,7 +19,8 @@ const ListQuestionTable = ({
     onAdd = null,
     onRemove = null,
     showOrder = false,
-    showActions = false
+    showActions = false,
+    onPickRandom = null
 }) => {
     const [filters, setFilters] = useState(initialFilters)
     const [currentPage, setCurrentPage] = useState(1)
@@ -31,7 +32,6 @@ const ListQuestionTable = ({
             [name]: value
         }
         setFilters(newFilters)
-        setCurrentPage(1)
         onFilterChange(newFilters)
     }
 
@@ -43,13 +43,13 @@ const ListQuestionTable = ({
     return (
         <div>
             {showFilters && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                    <div className="form-control">
+                <div className="bg-base-200 rounded-lg p-4 mb-6">
+                    <div className="flex flex-wrap items-center gap-2">
                         <select 
                             name="section"
                             value={filters.section}
                             onChange={handleFilterChange}
-                            className="select select-bordered"
+                            className="select select-bordered w-32"
                         >
                             <option value="">All Sections</option>
                             <option value="Numerical Ability">Numerical Ability</option>
@@ -59,55 +59,64 @@ const ListQuestionTable = ({
                             <option value="Quantitative Aptitude">Quantitative Aptitude</option>
                             <option value="Data Interpretation">Data Interpretation</option>
                         </select>
-                    </div>
 
-                    <div className="form-control">
                         <select 
                             name="difficulty"
                             value={filters.difficulty}
                             onChange={handleFilterChange}
-                            className="select select-bordered"
+                            className="select select-bordered w-32"
                         >
                             <option value="">All Difficulties</option>
                             <option value="Easy">Easy</option>
                             <option value="Medium">Medium</option>
                             <option value="Hard">Hard</option>
                         </select>
-                    </div>
-                    <div className="form-control">
+
                         <select 
                             name="type"
                             value={filters.type}
                             onChange={handleFilterChange}
-                            className="select select-bordered"
+                            className="select select-bordered w-32"
                         >
                             <option value="">All Types</option>
                             <option value="MCQ">MCQ</option>
                             <option value="Integer">Integer</option>
                         </select>
-                    </div>
-                    <div className="form-control">
+
                         <select 
                             name="status"
                             value={filters.status}
                             onChange={handleFilterChange}
-                            className="select select-bordered"
+                            className="select select-bordered w-32"
                         >
                             <option value="">All Status</option>
                             <option value="Solved">Solved</option>
+                            <option value="Unsolved">Unsolved</option>
                             <option value="Attempted">Attempted</option>
-                            <option value="Todo">Unsolved</option>
                         </select>
-                    </div>
-                    <div className="form-control flex-1 max-w-xs">
-                        <input
-                            type="text"
-                            name="search"
-                            placeholder="Search questions..."
-                            value={filters.search}
-                            onChange={handleFilterChange}
-                            className="input input-bordered w-full"
-                        />
+
+                        <div className="relative flex-1 min-w-[180px]">
+                            <input 
+                                type="text" 
+                                name="search"
+                                placeholder="Search questions" 
+                                className="input input-bordered w-full pr-10"
+                                onChange={handleFilterChange}
+                                value={filters.search}
+                            />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-3 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        {onPickRandom && (
+                            <button 
+                                className="btn btn-primary w-32"
+                                onClick={onPickRandom}
+                            >
+                                Pick Random
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -164,7 +173,7 @@ const ListQuestionTable = ({
                                             question.status === 'Attempted' ? 'badge-warning' :
                                             'badge-ghost'
                                         } badge-sm`}>
-                                            {question.status || 'Todo'}
+                                            {question.status || 'Unsolved'}
                                         </span>
                                     </td>
                                     {showActions && (
@@ -243,7 +252,8 @@ ListQuestionTable.propTypes = {
     onAdd: PropTypes.func,
     onRemove: PropTypes.func,
     showOrder: PropTypes.bool,
-    showActions: PropTypes.bool
+    showActions: PropTypes.bool,
+    onPickRandom: PropTypes.func
 }
 
 export default ListQuestionTable 

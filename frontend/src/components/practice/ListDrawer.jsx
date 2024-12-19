@@ -1,9 +1,7 @@
 import PropTypes from 'prop-types'
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { 
     ChevronLeftIcon, 
-    ChevronRightIcon, 
     MagnifyingGlassIcon,
     StarIcon,
     LockClosedIcon,
@@ -80,7 +78,7 @@ const ListDrawer = ({
                     </div>
 
                     {/* Lists */}
-                    <div className="overflow-y-auto flex-1">
+                    <div className="overflow-y-auto flex-1 pl-2 pr-2">
                         <div className="space-y-2">
                             {filteredLists.map(list => (
                                 <Link
@@ -126,11 +124,20 @@ ListDrawer.propTypes = {
         title: PropTypes.string.isRequired,
         isFavorites: PropTypes.bool,
         visibility: PropTypes.string,
-        savedBy: PropTypes.arrayOf(PropTypes.string),
-        creator: PropTypes.shape({
-            _id: PropTypes.string.isRequired,
-            username: PropTypes.string.isRequired
-        }),
+        savedBy: PropTypes.arrayOf(PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({
+                _id: PropTypes.string.isRequired,
+                username: PropTypes.string
+            })
+        ])),
+        creator: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({
+                _id: PropTypes.string.isRequired,
+                username: PropTypes.string.isRequired
+            })
+        ]).isRequired,
         questions: PropTypes.array,
         createdAt: PropTypes.string
     })).isRequired,

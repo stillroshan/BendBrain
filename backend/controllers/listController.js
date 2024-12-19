@@ -7,14 +7,25 @@ const createList = async (req, res) => {
         const { title, questions, visibility } = req.body
         const creator = req.user._id
 
+        // Validation
+        if (!title) {
+            return res.status(400).json({ message: 'Title is required' })
+        }
+        if (!Array.isArray(questions)) {
+            return res.status(400).json({ message: 'Questions must be an array' })
+        }
+
+        // Create the questions array with proper structure
+        const formattedQuestions = questions.map(q => ({
+            question: q.question, // This should now be just the ID string
+            order: q.order
+        }))
+
         const list = new List({
             title,
             creator,
-            questions: questions.map((q, index) => ({
-                question: q,
-                order: index + 1
-            })),
-            visibility
+            questions: formattedQuestions,
+            visibility: visibility || 'private'
         })
 
         const savedList = await list.save()
@@ -24,7 +35,11 @@ const createList = async (req, res) => {
         
         res.status(201).json(populatedList)
     } catch (error) {
-        res.status(400).json({ message: error.message })
+        console.error('Error creating list:', error) // Add server-side logging
+        res.status(400).json({ 
+            message: error.message,
+            details: error.errors // Include mongoose validation errors if any
+        })
     }
 }
 
@@ -114,17 +129,39 @@ const updateList = async (req, res) => {
 
         const { title, questions, visibility } = req.body
         
+        // Validate the questions array
+        if (!Array.isArray(questions)) {
+            return res.status(400).json({ message: 'Questions must be an array' })
+        }
+
+        // Validate each question has the required fields
+        for (const q of questions) {
+            if (!q.question || !q.order) {
+                return res.status(400).json({ 
+                    message: 'Each question must have question ID and order',
+                    received: q
+                })
+            }
+        }
+
         list.title = title
         list.visibility = visibility
-        list.questions = questions.map((q, index) => ({
-            question: q,
-            order: index + 1
-        }))
+        list.questions = questions // Use the questions array directly
 
         const updatedList = await list.save()
-        res.json(updatedList)
+        
+        // Populate the response
+        const populatedList = await List.findById(updatedList._id)
+            .populate('creator', 'username')
+            .populate('questions.question')
+
+        res.json(populatedList)
     } catch (error) {
-        res.status(400).json({ message: error.message })
+        console.error('Error updating list:', error)
+        res.status(400).json({ 
+            message: error.message,
+            details: error.errors // Include mongoose validation errors if any
+        })
     }
 }
 
@@ -146,10 +183,14 @@ const deleteList = async (req, res) => {
             return res.status(400).json({ message: 'Cannot delete favorites list' })
         }
 
-        await list.remove()
+        await List.deleteOne({ _id: list._id })
         res.json({ message: 'List deleted successfully' })
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        console.error('Error deleting list:', error) // Add server-side logging
+        res.status(500).json({ 
+            message: 'Error deleting list',
+            error: error.message 
+        })
     }
 }
 
@@ -174,7 +215,14 @@ const toggleSaveList = async (req, res) => {
         }
 
         await list.save()
-        res.json({ message: 'List save status toggled successfully' })
+        
+        // Return the populated list instead of just a message
+        const populatedList = await List.findById(list._id)
+            .populate('creator', 'username')
+            .populate('questions.question')
+            .populate('savedBy')
+        
+        res.json(populatedList)
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
@@ -205,7 +253,13 @@ const forkList = async (req, res) => {
         })
 
         const savedList = await newList.save()
-        res.status(201).json(savedList)
+        
+        // Populate the creator field before sending response
+        const populatedList = await List.findById(savedList._id)
+            .populate('creator', 'username')
+            .populate('questions.question')
+        
+        res.status(201).json(populatedList)
     } catch (error) {
         res.status(400).json({ message: error.message })
     }

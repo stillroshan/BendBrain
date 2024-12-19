@@ -18,6 +18,7 @@ const Lists = () => {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showForkModal, setShowForkModal] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
+    const [setCurrentPage] = useState(1)
 
     // Fetch user's lists (created and saved)
     useEffect(() => {
@@ -140,35 +141,21 @@ const Lists = () => {
 
     const handleToggleSave = async () => {
         try {
-            await axios.post(`/api/lists/${selectedList._id}/save`, {}, {
+            const response = await axios.post(`/api/lists/${selectedList._id}/save`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            // Refresh lists to update saved status
-            const response = await axios.get('/api/lists', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setLists(response.data)
+            // Update both the lists array and the selected list
+            setLists(lists.map(list => 
+                list._id === response.data._id ? response.data : list
+            ))
+            setSelectedList(response.data)
         } catch (error) {
             console.error('Error toggling save status:', error)
         }
     }
 
-    const handleToggleVisibility = async () => {
-        try {
-            const response = await axios.put(`/api/lists/${selectedList._id}`, {
-                ...selectedList,
-                visibility: selectedList.visibility === 'private' ? 'public' : 'private'
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setSelectedList(response.data)
-            // Update the list in the lists array
-            setLists(lists.map(list => 
-                list._id === response.data._id ? response.data : list
-            ))
-        } catch (error) {
-            console.error('Error toggling visibility:', error)
-        }
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
     }
 
     return (
@@ -196,8 +183,8 @@ const Lists = () => {
                         onDelete={handleDeleteList}
                         onFork={() => setShowForkModal(true)}
                         onToggleSave={handleToggleSave}
-                        onToggleVisibility={handleToggleVisibility}
                         isCreator={user?._id === selectedList.creator._id}
+                        onPageChange={handlePageChange}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full">
