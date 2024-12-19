@@ -50,8 +50,8 @@ app.use('/api/learning', learningRoutes)
 import questionRoutes from './routes/questionRoutes.js'
 app.use('/api/questions', questionRoutes)
 
-import questionListRoutes from './routes/questionListRoutes.js'
-app.use('/api/lists', questionListRoutes)
+import listRoutes from './routes/listRoutes.js'
+app.use('/api/lists', listRoutes)
 
 import dashboardRoutes from './routes/dashboardRoutes.js'
 app.use('/api/dashboard', dashboardRoutes)
