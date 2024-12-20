@@ -14,9 +14,17 @@ const getUserProgress = async (req, res) => {
         })
 
         // Get attempted but not solved questions
-        const attemptedQuestions = await SolvedQuestion.distinct('questionNumber', { 
-            userId, 
-            status: 'Attempted' 
+        // First get all question numbers that have ever been solved
+        const everSolvedQuestions = await SolvedQuestion.distinct('questionNumber', {
+            userId,
+            status: 'Solved'
+        })
+
+        // Then get attempted questions excluding the ones that were ever solved
+        const attemptedQuestions = await SolvedQuestion.distinct('questionNumber', {
+            userId,
+            status: 'Attempted',
+            questionNumber: { $nin: everSolvedQuestions }
         })
 
         // Calculate total questions by difficulty
@@ -40,13 +48,14 @@ const getUserProgress = async (req, res) => {
             {
                 $group: {
                     _id: '$questionNumber',
-                    latestStatus: { $first: '$status' },
+                    statuses: { $push: '$status' }, // Collect all statuses
                     difficulty: { $first: '$difficulty' }
                 }
             },
             {
                 $match: {
-                    latestStatus: 'Solved' // Only keep questions that are actually solved
+                    // Check if 'Solved' exists in the statuses array
+                    statuses: { $in: ['Solved'] }
                 }
             },
             {
