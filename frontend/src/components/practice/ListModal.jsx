@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import axios from 'axios'
 import ListQuestionTable from './ListQuestionTable'
 import PropTypes from 'prop-types'
+import { AuthContext } from '../../context/AuthContext'
 
 const ListModal = ({ list = null, onClose, onSubmit }) => {
     const [title, setTitle] = useState(list?.title || '')
@@ -18,10 +19,12 @@ const ListModal = ({ list = null, onClose, onSubmit }) => {
         section: '',
         difficulty: '',
         type: '',
+        status: '',
         search: ''
     })
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { user, token } = useContext(AuthContext)
 
     useEffect(() => {
         const fetchQuestions = async () => {
@@ -30,7 +33,11 @@ const ListModal = ({ list = null, onClose, onSubmit }) => {
                     params: {
                         ...filters,
                         page: currentPage,
-                        limit: 50
+                        limit: 50,
+                        userId: user._id
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`
                     }
                 })
                 setAvailableQuestions(response.data.questions)
@@ -40,7 +47,7 @@ const ListModal = ({ list = null, onClose, onSubmit }) => {
             }
         }
         fetchQuestions()
-    }, [currentPage, filters])
+    }, [filters, currentPage, user._id, token])
 
     const handleSubmit = (e) => {
         e.preventDefault()

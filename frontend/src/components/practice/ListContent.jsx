@@ -26,6 +26,7 @@ const ListContent = ({
         section: '',
         difficulty: '',
         type: '',
+        status: '',
         search: ''
     })
     const [showShareTooltip, setShowShareTooltip] = useState(false)
@@ -37,6 +38,7 @@ const ListContent = ({
             (!filters.section || question.section === filters.section) &&
             (!filters.difficulty || question.difficulty === filters.difficulty) &&
             (!filters.type || question.type === filters.type) &&
+            (!filters.status || question.status === filters.status) &&
             (!filters.search || 
                 question.title.toLowerCase().includes(filters.search.toLowerCase()) ||
                 question.questionNumber.toString().includes(filters.search))
@@ -60,6 +62,7 @@ const ListContent = ({
                 (!filters.section || question.section === filters.section) &&
                 (!filters.difficulty || question.difficulty === filters.difficulty) &&
                 (!filters.type || question.type === filters.type) &&
+                (!filters.status || question.status === filters.status) &&
                 (!filters.search || 
                     question.title.toLowerCase().includes(filters.search.toLowerCase()) ||
                     question.questionNumber.toString().includes(filters.search))

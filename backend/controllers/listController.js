@@ -1,5 +1,6 @@
 import List from '../models/List.js'
 import User from '../models/User.js'
+import SolvedQuestion from '../models/SolvedQuestion.js'
 
 // Create a new list
 const createList = async (req, res) => {
@@ -76,42 +77,65 @@ const getLists = async (req, res) => {
 // Get a single list by ID
 const getListById = async (req, res) => {
     try {
+        const userId = req.user._id;
+        
+        // First get the list with populated questions
         const list = await List.findById(req.params.id)
             .populate('questions.question')
             .populate('creator', 'username')
-            .populate('savedBy')
+            .populate('savedBy');
 
         if (!list) {
-            return res.status(404).json({ message: 'List not found' })
+            return res.status(404).json({ message: 'List not found' });
         }
 
-        // Check if user has access to the list
-        const userId = req.user._id.toString()
-        const creatorId = list.creator._id.toString()
-        const savedByIds = list.savedBy.map(id => id.toString())
+        // Check access permissions
+        const creatorId = list.creator._id.toString();
+        const savedByIds = list.savedBy.map(id => id.toString());
 
         if (list.visibility === 'private' && 
-            creatorId !== userId &&
-            !savedByIds.includes(userId)) {
+            creatorId !== userId.toString() &&
+            !savedByIds.includes(userId.toString())) {
             return res.status(403).json({ 
-                message: 'Access denied: This list is private',
-                details: {
-                    visibility: list.visibility,
-                    isCreator: creatorId === userId,
-                    isSaved: savedByIds.includes(userId)
-                }
-            })
+                message: 'Access denied: This list is private'
+            });
         }
 
-        res.json(list)
+        // Get solved statuses for all questions in the list
+        const solvedStatuses = await SolvedQuestion.find({
+            userId,
+            questionNumber: { 
+                $in: list.questions.map(q => q.question.questionNumber) 
+            }
+        });
+
+        // Create a map of questionNumber to status
+        const statusMap = {};
+        solvedStatuses.forEach(solved => {
+            statusMap[solved.questionNumber] = solved.status;
+        });
+
+        // Add status to each question
+        const questionsWithStatus = list.questions.map(q => ({
+            ...q.toObject(),
+            question: {
+                ...q.question.toObject(),
+                status: statusMap[q.question.questionNumber] || 'Unsolved'
+            }
+        }));
+
+        // Return the modified list
+        const listWithStatuses = {
+            ...list.toObject(),
+            questions: questionsWithStatus
+        };
+
+        res.json(listWithStatuses);
     } catch (error) {
-        console.error('Error in getListById:', error)
-        res.status(500).json({ 
-            message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        })
+        console.error('Error in getListById:', error);
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
 // Update a list
 const updateList = async (req, res) => {
