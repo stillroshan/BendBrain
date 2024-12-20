@@ -102,7 +102,9 @@ const ListDrawer = ({
                                             )}
                                             <span className="truncate">{list.title}</span>
                                         </div>
-                                        {list.savedBy?.includes(list.creator) && (
+                                        {list.savedBy?.some(user => 
+                                            (typeof user === 'string' ? user : user._id) === list.creator._id
+                                        ) && (
                                             <BookmarkIcon className="h-5 w-5 flex-shrink-0 text-primary" />
                                         )}
                                     </div>

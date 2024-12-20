@@ -23,30 +23,34 @@ const Lists = () => {
     // Fetch user's lists (created and saved)
     useEffect(() => {
         const fetchLists = async () => {
+            if (!token) {
+                navigate('/login')
+                return
+            }
+
             try {
                 const response = await axios.get('/api/lists', {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 setLists(response.data)
             } catch (error) {
-                console.error('Error fetching lists:', error)
+                if (error.response?.status === 401) {
+                    navigate('/login')
+                } else {
+                    console.error('Error fetching lists:', error)
+                }
             }
         }
+        
         if (user) {
             fetchLists()
         }
-    }, [user, token])
+    }, [user, token, navigate])
 
     // Fetch selected list details
     useEffect(() => {
         const fetchListDetails = async () => {
-            if (!listId) return
-            
-            if (!token) {
-                console.error('No token available')
-                navigate('/login')
-                return
-            }
+            if (!listId || !token) return
 
             try {
                 const response = await axios.get(`/api/lists/${listId}`, {
@@ -144,11 +148,18 @@ const Lists = () => {
             const response = await axios.post(`/api/lists/${selectedList._id}/save`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             })
+            
             // Update both the lists array and the selected list
-            setLists(lists.map(list => 
+            setLists(prevLists => prevLists.map(list => 
                 list._id === response.data._id ? response.data : list
             ))
             setSelectedList(response.data)
+
+            // Fetch all lists again to ensure drawer is up to date
+            const listsResponse = await axios.get('/api/lists', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setLists(listsResponse.data)
         } catch (error) {
             console.error('Error toggling save status:', error)
         }

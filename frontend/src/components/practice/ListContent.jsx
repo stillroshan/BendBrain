@@ -107,41 +107,45 @@ const ListContent = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {isCreator && (
+                        {(isCreator || list.visibility === 'public') && (
                             <>
                                 <button 
                                     className="btn btn-ghost btn-sm"
                                     onClick={onEdit}
-                                    disabled={list.isFavorites}
+                                    disabled={list.isFavorites || !isCreator}
                                 >
                                     <PencilSquareIcon className="h-5 w-5" />
                                 </button>
                                 <button 
                                     className="btn btn-ghost btn-sm text-error"
                                     onClick={onDelete}
-                                    disabled={list.isFavorites}
+                                    disabled={list.isFavorites || !isCreator}
                                 >
                                     <TrashIcon className="h-5 w-5" />
                                 </button>
-                                <button 
-                                    className="btn btn-ghost btn-sm"
-                                    onClick={onToggleSave}
-                                >
-                                    {list.savedBy?.some(user => 
-                                        (typeof user === 'string' ? user : user._id) === list.creator._id
-                                    ) ? (
-                                        <BookmarkSolidIcon className="h-5 w-5 text-primary" />
-                                    ) : (
-                                        <BookmarkIcon className="h-5 w-5" />
-                                    )}
-                                </button>
-                                <button 
-                                    className="btn btn-ghost btn-sm"
-                                    onClick={onFork}
-                                >
-                                    <DocumentDuplicateIcon className="h-5 w-5" />
-                                </button>
                             </>
+                        )}
+                        {!isCreator && (
+                            <button 
+                                className="btn btn-ghost btn-sm"
+                                onClick={onToggleSave}
+                            >
+                                {list.savedBy?.some(user => 
+                                    (typeof user === 'string' ? user : user._id) === user?._id
+                                ) ? (
+                                    <BookmarkSolidIcon className="h-5 w-5 text-primary" />
+                                ) : (
+                                    <BookmarkIcon className="h-5 w-5" />
+                                )}
+                            </button>
+                        )}
+                        {(isCreator || list.visibility === 'public') && (
+                            <button 
+                                className="btn btn-ghost btn-sm"
+                                onClick={onFork}
+                            >
+                                <DocumentDuplicateIcon className="h-5 w-5" />
+                            </button>
                         )}
                         <div className="relative">
                             <button 
