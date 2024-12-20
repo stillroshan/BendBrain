@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { 
     ChevronLeftIcon, 
+    PlusIcon,
     MagnifyingGlassIcon,
     StarIcon,
     LockClosedIcon,
@@ -47,14 +48,14 @@ const ListDrawer = ({
             `}>
                 <div className="h-full flex flex-col p-4">
                     {/* Header */}
-                    <div className="flex justify-between items-center h-14 mb-6">
+                    <div className="flex justify-between items-center h-14 mb-6 pl-2 pr-2">
                         <h2 className="text-3xl font-bold">Lists</h2>
                         <div className="flex items-center gap-2">
                             <button 
-                                className="btn btn-primary"
+                                className="btn btn-square btn-ghost"
                                 onClick={onCreateClick}
                             >
-                                Create
+                                <PlusIcon className="h-5 w-5" />
                             </button>
                             <button
                                 className="btn btn-square btn-ghost"
@@ -66,7 +67,7 @@ const ListDrawer = ({
                     </div>
 
                     {/* Search */}
-                    <div className="relative mb-4">
+                    <div className="relative mb-4 pl-2 pr-2">
                         <input
                             type="text"
                             placeholder="Search lists..."
